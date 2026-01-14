@@ -1,0 +1,18 @@
+# Requirements for the Fat-Tree Network Simulator
+# Use conservative minimal versions compatible with Python 3.8+.
+# Some packages (graphviz / pygraphviz / pydot) require a system-level Graphviz installation
+# (e.g. apt-get install graphviz on Debian/Ubuntu, or https://graphviz.org/download/ for Windows).
+
+matplotlib>=3.1
+networkx>=2.5
+numpy>=1.18
+pillow>=7.0
+pydot>=1.4.1
+pydotplus>=2.0.2
+graphviz>=0.17
+pytest>=6.2
+
+xxhash>=3.0
+
+# Optional (useful for type-checking / compatibility)
+typing-extensions>=3.7
