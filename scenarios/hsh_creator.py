@@ -35,7 +35,7 @@ class HSHCreator(SimulatorCreator):
                             dst_ip_address='10.1.1.2',
                             source_port=100,
                             dest_port=200,
-                            size_bytes=500000,
+                            size_bytes=50000,
                             protocol=Protocol.TCP,
                             message='Hello, Host2!'
                             )
@@ -48,7 +48,7 @@ class HSHCreator(SimulatorCreator):
                             dst_ip_address='10.1.1.1',
                             source_port=200,
                             dest_port=100,
-                            size_bytes=500000,
+                            size_bytes=50000,
                             protocol=Protocol.TCP,
                             message='bye bye, Host1!'
                             )

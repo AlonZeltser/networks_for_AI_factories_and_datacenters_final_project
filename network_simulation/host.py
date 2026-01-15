@@ -73,11 +73,12 @@ class Host(NetworkNode):
         )
 
     def on_message(self, packet: Packet):
+        print("!!!!!")
         packet.tracking_info.delivered = True
         packet.tracking_info.arrival_time = self.scheduler.get_current_time()
         self._received_count += 1
         if self.message_verbose:
-            logging.debug(f"Received message: {packet}"
+            logging.info(f"Received message: {packet}"
                           f"[{self.scheduler.get_current_time():.6f}s] Host {self.name} received message {packet.tracking_info.global_id} "
                           f"from {packet.tracking_info.sender} with content: {packet.content}")
 
