@@ -10,6 +10,8 @@ from network_simulation.simulator_creator import SimulatorCreator
 from scenarios.fat_tree_topo_creator import FatTreeTopoCreator
 from scenarios.hsh_creator import HSHCreator
 from scenarios.simple_star_creator import SimpleStarCreator
+from scenarios.circle_creator import CircleCreator
+from scenarios.ai_factory_su_creator import AIFactorySUCreator
 from visualization.experiment_visualizer import visualize_experiment_results
 
 
@@ -44,8 +46,16 @@ def create_creators_from_args(args) -> List[SimulatorCreator]:
         for link_failure in link_failures:
             logging.info(f"Creating Simple Star topology with link-failure={link_failure}%")
             results.append(SimpleStarCreator(visualize, link_failure_percent=link_failure, max_path=6, verbose=verbose))
+    elif topology == 'circle':
+        for link_failure in link_failures:
+            logging.info(f"Creating Circle topology with link-failure={link_failure}%")
+            results.append(CircleCreator(visualize=visualize, link_failure_percent=link_failure, max_path=32, verbose=verbose))
+    elif topology == 'ai-factory-su':
+        for link_failure in link_failures:
+            logging.info(f"Creating AI-Factory SU topology with link-failure={link_failure}%")
+            results.append(AIFactorySUCreator(visualize=visualize, link_failure_percent=link_failure, max_path=64, verbose=verbose))
     else:
-        raise ValueError(f"Unknown topology '{args.t}'. Valid options: fat-tree, hsh, simple-star")
+        raise ValueError(f"Unknown topology '{args.t}'. Valid options: fat-tree, hsh, simple-star, circle, ai-factory-su")
 
     return results
 
@@ -53,7 +63,7 @@ def create_creators_from_args(args) -> List[SimulatorCreator]:
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Network simulator runner')
     parser.add_argument('-t', default='fat-tree',
-                        help='Type of topology: fat-tree, hsh (simplest, for demo), simple-star (simple tree with 2 levels, for demo and debugging)')
+                        help='Type of topology: fat-tree, hsh (simplest, for demo), simple-star (simple tree with 2 levels, for demo and debugging), circle, ai-factory-su')
     parser.add_argument('-k', nargs='+', type=int, default=[4],
                         help='(fat-tree only) list of number of ports per switch (must be even)')
     parser.add_argument('-visualize', action='store_true', dest='visualize',

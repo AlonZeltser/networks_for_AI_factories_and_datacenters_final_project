@@ -30,6 +30,7 @@ class NetworkNode(ABC):
     # the reason is to avoid deep recursion when messages are posted in response to receiving messages
     def post(self, packet: Packet) -> None:
         packet.header.ttl -= 1
+        packet.tracking_info.path_length += 1
         if self.message_verbose and packet.tracking_info.verbose_path is not None:
             packet.tracking_info.verbose_path.append(self.name)
         self.inbox.append(packet)

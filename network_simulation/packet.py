@@ -55,7 +55,6 @@ class PacketTrackingInfo:
     path_length: int = 0
     verbose_path: list[str] | None = None  # only when packet_verbose enabled
     delivered: bool = False
-    dropped: bool = False
     arrival_time: Optional[float] = None
 
 

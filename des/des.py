@@ -9,7 +9,7 @@ from des.min_value_priority_queue import MinValuePriorityQueue
 @dataclass(order=True)
 class DESEvent:
     time: float
-    seq: int = field(compare=False)
+    seq: int
     action: Callable[[], None] = field(compare=False)
 
 

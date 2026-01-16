@@ -58,8 +58,8 @@ class SimulatorCreator(ABC):
 
         return self.simulator
 
-    def create_host(self, name: str, ip_address: str) -> Host:
-        h = Host(name=name, scheduler=self.simulator, ip_address=ip_address, message_verbose=self.verbose)
+    def create_host(self, name: str, ip_address: str, ports_count: int = 1) -> Host:
+        h = Host(name=name, scheduler=self.simulator, ip_address=ip_address, message_verbose=self.verbose, ports_count=ports_count)
         assert name not in self.entities and name not in self.hosts
         self.entities[name] = h
         self.hosts[name] = h
@@ -105,7 +105,7 @@ class SimulatorCreator(ABC):
         dropped_message_count = len([p for p in self.simulator.packets if p.header.dropped])
         path_lengths = [p.tracking_info.path_length for p in self.simulator.packets if p.delivered]
         trans_times = [link.accumulated_transmitting_time for link in self.links]
-        links_average_delivery_time = float(sum(trans_times)) / float(len(trans_times))
+        links_average_delivery_time = float(sum(trans_times)) / float(len(trans_times)) if len(trans_times) > 0 else 0.0
 
         run_statistics = {
             'messages count': messages_count,
@@ -122,7 +122,7 @@ class SimulatorCreator(ABC):
             'links min delivery time': min(trans_times),
             'links max delivery time': max(trans_times),
             'links average delivery time': links_average_delivery_time,
-            'link average utilization': links_average_delivery_time / total_time,
+            'link average utilization': links_average_delivery_time / total_time if total_time > 0 else 0.0,
             'link_min_bytes_transmitted': min(link.accumulated_bytes_transmitted for link in self.links),
             'link_max_bytes_transmitted': max(link.accumulated_bytes_transmitted for link in self.links),
             'hosts received counts': [host.received_count for host in self.hosts.values()]

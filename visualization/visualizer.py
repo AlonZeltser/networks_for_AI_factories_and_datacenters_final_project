@@ -43,7 +43,8 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
         return None
 
     # Build graph
-    G = nx.Graph()
+    # Use a MultiGraph so multiple physical links between the same 2 nodes are preserved.
+    G = nx.MultiGraph()
     node_types = {}
     # Add node vertices for non-link entities
     for name, ent in entities.items():
@@ -57,16 +58,52 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
             node_types[name] = "switch"
             G.add_node(name)
 
-    # Add edges from Link objects (they hold node1/node2 references)
+    def _link_endpoints(link_obj):
+        """Return (node_name1, node_name2) for a link object.
+
+        Supports both the newer ports-based Link model (link.port1/port2.owner) and the older
+        direct node reference model (link.node1/node2).
+        """
+        # Newer model: link.port1/port2 are Ports whose `.owner` is a NetworkNode
+        try:
+            p1 = getattr(link_obj, "port1", None)
+            p2 = getattr(link_obj, "port2", None)
+            o1 = getattr(p1, "owner", None)
+            o2 = getattr(p2, "owner", None)
+            n1 = getattr(o1, "name", None)
+            n2 = getattr(o2, "name", None)
+            if n1 and n2:
+                return n1, n2
+        except Exception:
+            pass
+
+        # Older model (for backwards compatibility)
+        try:
+            n1 = getattr(getattr(link_obj, "node1", None), "name", None)
+            n2 = getattr(getattr(link_obj, "node2", None), "name", None)
+            if n1 and n2:
+                return n1, n2
+        except Exception:
+            pass
+
+        return None, None
+
+    # Add edges from Link objects
     for name, ent in entities.items():
         if ent is None:
             continue
-        if hasattr(ent, "node1") and hasattr(ent, "node2"):
-            n1 = getattr(ent.node1, "name", None)
-            n2 = getattr(ent.node2, "name", None)
+
+        # Heuristic: treat any entity that looks like a link as a potential edge
+        if hasattr(ent, "port1") and hasattr(ent, "port2"):
+            n1, n2 = _link_endpoints(ent)
             if n1 and n2:
-                # Use simple edge label (link name). Port annotations removed for readability.
-                G.add_edge(n1, n2, label=name, _link_name=name)
+                # Use link name as the multi-edge key so each physical link is distinct.
+                G.add_edge(n1, n2, key=name, label=name, _link_name=name)
+        elif hasattr(ent, "node1") and hasattr(ent, "node2"):
+            # legacy link shape
+            n1, n2 = _link_endpoints(ent)
+            if n1 and n2:
+                G.add_edge(n1, n2, key=name, label=name, _link_name=name)
 
     if G.number_of_nodes() == 0:
         print("No nodes to visualize in the topology.")
@@ -82,9 +119,21 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
         edges = sorted([n for n in G.nodes() if str(n).startswith('edge_switch')])
         hosts = sorted([n for n in G.nodes() if str(n).startswith('host')])
 
-        layers = [cores, aggs, edges, hosts]
-        # keep only non-empty layers, but preserve order
-        layers = [layer for layer in layers if layer]
+        # Also support the AI-Factory SU naming scheme:
+        #   spines: su<id>_spine<k>
+        #   leaves: su<id>_leaf<k>
+        #   servers: su<id>_leaf<k>_srv<k>
+        su_spines = sorted([n for n in G.nodes() if '_spine' in str(n) and str(n).startswith('su')])
+        su_leaves = sorted([n for n in G.nodes() if '_leaf' in str(n) and str(n).startswith('su') and '_srv' not in str(n)])
+        su_hosts = sorted([n for n in G.nodes() if '_srv' in str(n) and str(n).startswith('su')])
+
+        # If this looks like an SU topology, prefer its 3-layer layout.
+        if su_spines and su_leaves and su_hosts:
+            layers = [su_spines, su_leaves, su_hosts]
+        else:
+            layers = [cores, aggs, edges, hosts]
+            # keep only non-empty layers, but preserve order
+            layers = [layer for layer in layers if layer]
 
         if len(layers) >= 2:
             pos = {}
@@ -187,70 +236,107 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
     # Explicitly annotate host nodes using matplotlib.text so IPs show reliably
     ax = plt.gca()
 
-    # Color edges based on whether the underlying Link object is failed
-    edge_colors = []
-    edge_styles = []
-    failed_edge_pairs = []
-    healthy_edge_pairs = []
-    for (u, v, data) in G.edges(data=True):
-        link_name = data.get('label') or data.get('_link_name')
-        link_obj = entities.get(link_name)
-        if link_obj is not None and getattr(link_obj, 'failed', False):
-            edge_colors.append('red')
-            edge_styles.append('dashed')
-            failed_edge_pairs.append((u, v, link_name))
-        else:
-            edge_colors.append('gray')
-            edge_styles.append('solid')
-            healthy_edge_pairs.append((u, v, link_name))
+    # --- Edges (aggregated) ---
+    # MultiGraph can contain many parallel physical links. For readability we aggregate
+    # them into a single straight edge per node-pair and annotate with multiplicity.
+    from collections import defaultdict
 
-    # draw edges with styles; draw failed edges with a thicker line so they're more visible
-    # first draw healthy (thin) then failed (thicker) so failed stand out
-    for (u, v, link_name) in healthy_edge_pairs:
-        coll = nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], edge_color='gray', style='solid', width=1.5, alpha=0.9,
-                                      ax=ax)
+    pair_to_keys = defaultdict(list)  # (min(u,v), max(u,v)) -> [edge_key,...]
+    for u, v, key in G.edges(keys=True):
+        pair = tuple(sorted((u, v)))
+        pair_to_keys[pair].append(key)
+
+    # determine per-pair style: failed if any underlying link is failed
+    healthy_pairs = []  # list of (u, v, count)
+    failed_pairs = []   # list of (u, v, count)
+
+    for (u, v), keys in pair_to_keys.items():
+        any_failed = False
+        for key in keys:
+            data = G.get_edge_data(u, v, key) or {}
+            link_name = data.get('label') or data.get('_link_name') or key
+            link_obj = entities.get(link_name)
+            if link_obj is not None and getattr(link_obj, 'failed', False):
+                any_failed = True
+                break
+        if any_failed:
+            failed_pairs.append((u, v, len(keys)))
+        else:
+            healthy_pairs.append((u, v, len(keys)))
+
+    # draw healthy (thin) then failed (thick) edges
+    for (u, v, count) in healthy_pairs:
+        coll = nx.draw_networkx_edges(
+            G,
+            pos,
+            edgelist=[(u, v)],
+            edge_color='gray',
+            style='solid',
+            width=1.8,
+            alpha=0.9,
+            ax=ax,
+        )
         try:
             coll.set_zorder(1)
         except Exception:
             pass
-    for (u, v, link_name) in failed_edge_pairs:
-        coll = nx.draw_networkx_edges(G, pos, edgelist=[(u, v)], edge_color='red', style='dashed', width=6.0,
-                                      alpha=0.95, ax=ax)
+
+    for (u, v, count) in failed_pairs:
+        coll = nx.draw_networkx_edges(
+            G,
+            pos,
+            edgelist=[(u, v)],
+            edge_color='red',
+            style='dashed',
+            width=6.0,
+            alpha=0.95,
+            ax=ax,
+        )
         try:
             coll.set_zorder(5)
         except Exception:
             pass
 
-    # draw edge labels afterwards
-    edge_labels = nx.get_edge_attributes(G, 'label')
-    # draw labels manually so we can color failed-link labels differently and avoid overlap
-    for (u, v, data) in G.edges(data=True):
-        label = data.get('label')
-        if label is None:
+    # draw multiplicity labels at edge midpoints
+    for (u, v), keys in pair_to_keys.items():
+        if not keys:
             continue
-        # compute midpoint for label placement
+        count = len(keys)
+        if count <= 1:
+            continue  # no need to clutter with x1
+
         x1, y1 = pos[u]
         x2, y2 = pos[v]
         lx, ly = (x1 + x2) / 2.0, (y1 + y2) / 2.0
-        # choose color based on link failure
-        link_obj = entities.get(label)
-        is_failed = (link_obj is not None and getattr(link_obj, 'failed', False))
-        lab_color = 'red' if is_failed else 'black'
-        lab_text = (f"{label} (FAILED)" if is_failed else label)
+
+        any_failed = False
+        for key in keys:
+            data = G.get_edge_data(u, v, key) or {}
+            link_name = data.get('label') or data.get('_link_name') or key
+            link_obj = entities.get(link_name)
+            if link_obj is not None and getattr(link_obj, 'failed', False):
+                any_failed = True
+                break
+
+        lab_color = 'red' if any_failed else 'black'
+        lab_text = f"x{count}" + (" (FAILED)" if any_failed else "")
         try:
-            # draw marker for failed links to make them unmistakable
-            if is_failed:
-                try:
-                    ax.scatter([lx], [ly], color='red', marker='x', s=80, zorder=4)
-                except Exception:
-                    pass
-            ax.text(lx, ly, str(lab_text), fontsize=max(6, int(base_font * (1.0 if not is_failed else 1.1))),
-                    color=lab_color, fontweight=('bold' if is_failed else 'normal'),
-                    horizontalalignment='center', verticalalignment='center',
-                    bbox=dict(facecolor='white', alpha=0.9, edgecolor='none', pad=0.3))
+            ax.text(
+                lx,
+                ly,
+                lab_text,
+                fontsize=max(7, int(base_font * 0.85)),
+                color=lab_color,
+                fontweight=('bold' if any_failed else 'normal'),
+                horizontalalignment='center',
+                verticalalignment='center',
+                bbox=dict(facecolor='white', alpha=0.85, edgecolor='none', pad=0.2),
+                zorder=10,
+            )
         except Exception:
-            # fallback to networkx label drawing for this label
             pass
+
+    # NOTE: per-link edge labels intentionally disabled; we only show multiplicity.
 
     # add a legend so the failed links are obvious to readers
     try:

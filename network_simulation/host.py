@@ -12,8 +12,8 @@ flow_ids = itertools.count(1)
 
 
 class Host(NetworkNode):
-    def __init__(self, name: str, scheduler: DiscreteEventSimulator, ip_address: str, message_verbose: bool = False, max_path: int | None = None):
-        super().__init__(name, 1, scheduler, message_verbose=message_verbose)
+    def __init__(self, name: str, scheduler: DiscreteEventSimulator, ip_address: str, message_verbose: bool = False, max_path: int | None = None, ports_count: int = 1):
+        super().__init__(name, ports_count, scheduler, message_verbose=message_verbose)
         self._ip_address: str = ip_address
         self._received_count: int = 0
         self.max_path: int | None = max_path
@@ -73,12 +73,11 @@ class Host(NetworkNode):
         )
 
     def on_message(self, packet: Packet):
-        print("!!!!!")
         packet.tracking_info.delivered = True
         packet.tracking_info.arrival_time = self.scheduler.get_current_time()
         self._received_count += 1
         if self.message_verbose:
-            logging.info(f"Received message: {packet}"
+            logging.debug(f"Received message: {packet}"
                           f"[{self.scheduler.get_current_time():.6f}s] Host {self.name} received message {packet.tracking_info.global_id} "
                           f"from {packet.tracking_info.sender} with content: {packet.content}")
 
