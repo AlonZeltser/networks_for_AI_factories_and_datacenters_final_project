@@ -1,9 +1,9 @@
-from network_simulation.simulator_creator import SimulatorCreator
+from network_simulation.network import Network
 
 
-class SimpleStarCreator(SimulatorCreator):
-    def __init__(self, visualize:bool, max_path:int, link_failure_percent:float=0.0, verbose:bool=False):
-        super().__init__("simple star", max_path, visualize, link_failure_percent=link_failure_percent, verbose=verbose)
+class SimpleStarNetworkSimulator(Network):
+    def __init__(self, max_path: int, link_failure_percent: float = 0.0, verbose: bool = False, verbose_route: bool = False):
+        super().__init__("simple star", max_path, link_failure_percent=link_failure_percent, verbose=verbose, verbose_route=verbose_route)
         self._identifier = {"link failure percent": link_failure_percent}
 
     def create_topology(self):
@@ -55,26 +55,3 @@ class SimpleStarCreator(SimulatorCreator):
 
         s_core.set_ip_routing("10.1.0.0/16", 1)
         s_core.set_ip_routing("10.2.0.0/16", 2)
-
-
-
-
-    def create_scenario(self):
-        def e1():
-            hosts_names = ['H1', 'H2', 'H3', 'H4']
-            hosts = [self.get_entity(s) for s in hosts_names]
-            for source in hosts:
-                for destination in hosts:
-                    source.send_to_ip(destination.ip_address, f'Message from {source.name} to {destination.name}', size_bytes=1000)
-
-        for i in range(0, 50):
-            self.simulator.schedule_event(1, e1)
-        """
-        for i in range(0, 1000):
-            self.simulator.schedule_event(i / 10.0, e1)
-            self.simulator.schedule_event(i, e2)
-        for i in range(0, 2000):
-            self.simulator.schedule_event(i / 10.0, e1)
-            self.simulator.schedule_event(i, e2)
-        """
-

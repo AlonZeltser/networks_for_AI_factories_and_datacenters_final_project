@@ -113,7 +113,7 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
     # the fat-tree conventions. Otherwise fall back to graphviz or spring layout.
     layers = []  # initialize so it's available for sizing even if classification fails
     try:
-        # classify nodes by name prefixes commonly used in fat-tree creator
+        # classify nodes by name prefixes commonly used in fat-tree network
         cores = sorted([n for n in G.nodes() if str(n).startswith('core_switch')])
         aggs = sorted([n for n in G.nodes() if str(n).startswith('agg_switch')])
         edges = sorted([n for n in G.nodes() if str(n).startswith('edge_switch')])

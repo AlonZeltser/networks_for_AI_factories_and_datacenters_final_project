@@ -1,7 +1,8 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Tuple
+from enum import Enum
+from typing import Dict, List
 
 from des.des import DiscreteEventSimulator
 from network_simulation.ip import IPPrefix
@@ -9,30 +10,38 @@ from network_simulation.link import Link
 from network_simulation.packet import Packet
 from network_simulation.port import Port
 
+class RoutingMode(Enum):
+    ECMP = 1
+    ADAPTIVE = 2
+
 
 class NetworkNode(ABC):
     def __init__(self, name: str,
                  ports_count: int,
                  scheduler: DiscreteEventSimulator,
-                 message_verbose: bool = False):
+                 routing_mode: RoutingMode = RoutingMode.ECMP,
+                 message_verbose: bool = False,
+                 verbose_route: bool = False):
         # --- actor basics (formerly Node) ---
         self.name = name
         self.scheduler = scheduler
         self.inbox: List[Packet] = []
         self.message_verbose = message_verbose
+        self.verbose_route = verbose_route
 
         # --- networking ---
         self.ports: List[Port] = [Port(i, self) for i in range(ports_count)]
         self.ip_forward_table: Dict[str, List[int]] = defaultdict(list)
+        self.routing_mode = routing_mode
 
     # called by others, to make this actor receive a packet
     # messages are not handled immediately, but scheduled to be handled at the current time step
     # the reason is to avoid deep recursion when messages are posted in response to receiving messages
     def post(self, packet: Packet) -> None:
         packet.header.ttl -= 1
-        packet.tracking_info.path_length += 1
-        if self.message_verbose and packet.tracking_info.verbose_path is not None:
-            packet.tracking_info.verbose_path.append(self.name)
+        packet.tracking_info.route_length += 1
+        if self.verbose_route and packet.tracking_info.verbose_route is not None:
+            packet.tracking_info.verbose_route.append(self.name)
         self.inbox.append(packet)
         self.scheduler.schedule_event(0.0, self.handle_message)
 
@@ -93,31 +102,16 @@ class NetworkNode(ABC):
         if not getattr(port.link, 'failed'):
             self.ip_forward_table[ip_prefix].append(index)
 
-    def _internal_send_packet(self, packet: Packet) -> None:
-        assert not packet.header.dropped
-
-        if packet.is_expired():
-            self.handle_expired_packet(packet)
-        else:  # normal packet routing
-            self.handle_regular_packet(packet)
-
-    def handle_expired_packet(self, packet: Packet):
-        if self.message_verbose:
-            logging.warning(
-                f"{self.name} dropping expired message {packet.tracking_info.global_id} to {packet.header.five_tuple.dst_ip}")
-        packet.header.dropped = True
-
-    def handle_regular_packet(self, packet: Packet):
+    def select_port_for_packet(self, packet: Packet) -> int | None:
         dst_ip = packet.header.five_tuple.dst_ip
 
         # Find ports that match prefix to the destination IP
-        relevant_ports: List[Tuple[int, int]] = [
+        relevant_ports: list[tuple[int, int]] = [
             (p_id, IPPrefix.from_string(prefix_str).prefix_len)
             for prefix_str, port_ids in self.ip_forward_table.items()
             if IPPrefix.from_string(prefix_str).contains(dst_ip)
             for p_id in port_ids
         ]
-
         # If any relevant ports found, apply Longest Prefix Match, since it implies shortest path
         if relevant_ports:
             # Longest Prefix Match: choose the port with the longest matching prefix
@@ -125,22 +119,41 @@ class NetworkNode(ABC):
             longest_mask_len = relevant_ports[0][1]
             best_masked_ports = [p for p in relevant_ports if p[1] == longest_mask_len]
             assert best_masked_ports  # at least one port must exist here
+            if self.routing_mode == RoutingMode.ECMP:
+                # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
+                # flow sticks to one path to avoid reordering
+                port_index = hash(packet.header.five_tuple) % len(best_masked_ports)
+                best_port_id = best_masked_ports[port_index][0]
+                return best_port_id
+            else:
+                ports_lengths = [self.ports[p[0]].queue_size() for p in best_masked_ports]
+                min_length = min(ports_lengths)
+                min_length_ports = [best_masked_ports[i][0] for i, l in enumerate(ports_lengths) if l == min_length]
+                # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
+                # flow sticks to one path to avoid reordering
+                port_index = hash(packet.header.five_tuple) % len(min_length_ports)
+                best_port_id = min_length_ports[port_index]
+                return best_port_id
+        else:
+            return None
 
-            # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
-            # flow sticks to one path to avoid reordering
-            port_index = hash(packet.header.five_tuple) % len(best_masked_ports)
-            best_port_id = best_masked_ports[port_index][0]
 
+    def _internal_send_packet(self, packet: Packet) -> None:
+        best_port_id = self.select_port_for_packet(packet)
+        if best_port_id is not None:
             port = self.ports[best_port_id]
             if self.message_verbose:
+                now = self.scheduler.get_current_time()
                 logging.debug(
-                    f"{self.name} sending for destination {dst_ip} through port {best_port_id} to link {port.link.name}")
+                    f"[t={now:.6f}s] {self.name} submitted packet {packet.tracking_info.global_id} to port {best_port_id + 1}")
             port.enqueue(packet)
         else:
             if self.message_verbose:
+                now = self.scheduler.get_current_time()
                 logging.warning(
-                    f"{self.name} has no routing entry for destination IP {dst_ip}, dropping message")
+                    f"[t={now:.6f}s] {self.name} has no routing entry for destination IP {packet.header.five_tuple.dst_ip}, dropping message")
             packet.header.dropped = True
+
 
     @property
     def links(self) -> List[Link]:

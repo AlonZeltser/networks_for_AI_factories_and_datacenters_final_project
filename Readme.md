@@ -50,15 +50,15 @@ ChatGPT doumentation will be published as part of final submission.
 | `NetworkNode`         | A Node that can receive netwok packets (Host, Switch..). implementes the actual routing.                 |
 | `Scheduler`           | Alias for the discrete event manager. Handles scheduled-tasks and execute them on the right time         |
 | `Message` / `Packet`  | Data unit that is sent between components. In this implementation also track its rout, timing etc.       |
-| `SimulatorCreator`    | Base class for creating instances of simulation (e.g. Fat Tree). Takes car also on results and summaries |
+| `Network`    | Base class for creating instances of simulation (e.g. Fat Tree). Takes car also on results and summaries |
 
 ### 🕸️ Design Highlights: Network Routing
 - Each port is set with a subnet
 - Routing is done to the "narrowest" subnet match
 - ECMP implemented by random choice among equal-cost paths
 - Loop is tracked: each port remembers the packets that went through it, and avoid re-sending them
-- If a packet is found looped, it is marked as lost and a trial starts to send it to different ports, even one that don't match the subnet. This solves the "non trivial core" path, in case an aggregation-edge link is down.
-- If a packet has no routing (either by subnet or by lost-procedure), it is marked as dropped and gets out of the game.
+- If a packet is found looped, it is marked as dropped and a trial starts to send it to different ports, even one that don't match the subnet. This solves the "non trivial core" path, in case an aggregation-edge link is down.
+- If a packet has no routing (either by subnet or by the loop-avoidance procedure), it is marked as dropped and gets out of the game.
 - Each packet holds information about the creation time and number of hops. If TTL or number of hops goes beyond a threshold (hard coded) then the message is dropped.
 
 ### 🕸️ Design Highlights: Experiment
@@ -138,8 +138,7 @@ Parameters list:
 ```bash
 python main.py --help
 
-usage: main.py [-h] [-t T] [-k K [K ...]] [-visualize]
-               [-link-failure LINK_FAILURE [LINK_FAILURE ...]] [-message_verbose]
+usage: main.py [-h] [-t T] [-k K [K ...]] [-link-failure LINK_FAILURE [LINK_FAILURE ...]] [-message_verbose]
 
 Network simulator runner
 
@@ -147,16 +146,13 @@ optional arguments:
   -h, --help            show this help packet and exit
   -t T                  Type of topology: fat-tree, hsh (simplest, for demo),
                         simple-star (simple tree with 2 levels, for demo and
-                        debugging)
+                        debugging), ai-factory-su
   -k K [K ...]          (fat-tree only) list of number of ports per switch
                         (must be even)
-  -visualize            Enable topology on screen visualization (single
-                        boolean flag). If not set, visualizations are still
-                        saved to files.
   -link-failure LINK_FAILURE [LINK_FAILURE ...]
                         list of probability of links to fail in each test.
                         Fraction (0-100) of links to fail
-  -message_verbose              Enable message_verbose logging output to console
+  -message_verbose      Enable message_verbose logging output to console
 
 ```
 **example 1:** running fat-tree architecture with k=4, 6, 8, on-screen visualization, link failures of 0%, 5%, 10%:
@@ -204,11 +200,11 @@ and 3 steps down using a deterministic subnet mapping (in real life: static rout
 - The simulator's ECMP routing and loop avoidance mechanisms helped mitigate the impact of failures, but some packets were inevitably dropped when no rout was available at the edge-host level.
 - Below are performance summaries for k=12, 24, 48 with 1%, 5%, and 10% link failure:  
 ![Performance Summary k=12 link-failure 1.0,5.0,10.0](results_from_demo_run/fat_tree_performance_experiment/results/experiments/exp_failure_1.0_k_stats.png)![Performance Summary k=24 link-failure 1.0,5.0,10.0](results_from_demo_run/fat_tree_performance_experiment/results/experiments/exp_failure_5.0_k_stats.png)![Performance Summary k=48 link-failure 1.0,5.0,10.0](results_from_demo_run/fat_tree_performance_experiment/results/experiments/exp_failure_10.0_k_stats.png)
-- If we check the dropped packet and the "lost but recovered" packets, we can see that as the link failure rate increases very slowly, which indicates that the Fat-Tree network is fairly resilient due to its multiple paths, ECMP and my loop avoidance mechanism.
+- If we check the dropped packet count, we can see that as the link failure rate increases it stays relatively low, which indicates that the Fat-Tree network is fairly resilient due to its multiple paths, ECMP and my loop avoidance mechanism.
 A reasonable failure rate would be 1%-5%, which shows that the system overall will slow (retransmitting) but won't collapse.
-![Lost and Dropped Packets 12](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_12_delivery_stats.png)  
-![Lost and Dropped Packets 24](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_24_delivery_stats.png)  
-![Lost and Dropped Packets 48](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_48_delivery_stats.png)
+![Dropped Packets 12](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_12_delivery_stats.png)  
+![Dropped Packets 24](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_24_delivery_stats.png)  
+![Dropped Packets 48](results_from_demo_run/fat_tree_performance_experiment/results/experiments/experiment_k_48_delivery_stats.png)
 - Bandwidth and TPT: on this metric, the system shows mild degradation as the link failure rate increases, since more packets are dropped or made much larger path. A longer path would  occur also in dynamic routing based system.   
 Although some extreme long paths created, the overall throughput (average length) decresed insignificantly. This indicates that the Fat-Tree topology is effective in maintaining performance, although some cases (applications) will still suffer. 
 Below we can see the throughput and bandwidth for k=12, 24, 48 with varying link failure rates:  

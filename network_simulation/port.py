@@ -80,8 +80,9 @@ class Port:
 
         packet = self.egress_queue.popleft()
         if self.owner.message_verbose:
+            now = self.owner.scheduler.get_current_time()
             logging.debug(
-                f"{self.owner.name} Port {self.port_id} transmitting packet {packet.tracking_info.global_id} via link {self.link.name}"
+                f"[t={now:.6f}s] {self.owner.name}, Port {self.port_id} transmitting packet {packet.tracking_info.global_id} via link {self.link.name}"
             )
 
         self.link.transmit(packet, self)

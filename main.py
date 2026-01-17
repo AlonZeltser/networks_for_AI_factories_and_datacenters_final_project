@@ -2,25 +2,44 @@ import random
 import logging
 import argparse
 import sys
+import time
 from typing import List
 import os
 
 
-from network_simulation.simulator_creator import SimulatorCreator
-from scenarios.fat_tree_topo_creator import FatTreeTopoCreator
-from scenarios.hsh_creator import HSHCreator
-from scenarios.simple_star_creator import SimpleStarCreator
-from scenarios.circle_creator import CircleCreator
-from scenarios.ai_factory_su_creator import AIFactorySUCreator
+from network_simulation.network import Network
+from network_simulators.fat_tree_topo_network_simulator import FatTreeTopoNetworkSimulator
+from network_simulators.hsh_network_simulator import HSHNetworkSimulator
+from network_simulators.simple_star_network_simulator import SimpleStarNetworkSimulator
+from network_simulators.ai_factory_su_network_simulator import AIFactorySUNetworkSimulator
 from visualization.experiment_visualizer import visualize_experiment_results
+from scenarios.none_scenario import NoneScenario
+from scenarios.hsh_pingpong import HSHPingPongScenario
+from scenarios.simple_star_all_to_all import SimpleStarAllToAllScenario
+from scenarios.fat_tree_deterministic_load import FatTreeDeterministicLoadScenario
 
 
 
-def create_creators_from_args(args) -> List[SimulatorCreator]:
-    results: List[SimulatorCreator] = []
-    visualize = args.visualize
+def _scenario_from_args(args):
+    name = (getattr(args, 'scenario', None) or 'none').lower()
+    if name == 'none':
+        return NoneScenario()
+    if name == 'hsh-pingpong':
+        return HSHPingPongScenario()
+    if name == 'simple-star-all-to-all':
+        return SimpleStarAllToAllScenario(repeats=50, message_size_bytes=1000)
+    if name == 'fat-tree-deterministic-load':
+        return FatTreeDeterministicLoadScenario(num_messages=100)
+    raise ValueError(
+        f"Unknown scenario '{name}'. Valid options: none, hsh-pingpong, simple-star-all-to-all, fat-tree-deterministic-load"
+    )
+
+
+def create_network_from_arg(args) -> List[Network]:
+    results: list[Network] = []
     topology = args.t.lower()
     verbose = args.message_verbose
+    verbose_route = args.verbose_route
     link_failures = args.link_failure
     if link_failures is None or len(link_failures) == 0:
         link_failures = [0.0]
@@ -37,70 +56,134 @@ def create_creators_from_args(args) -> List[SimulatorCreator]:
         for k in args.k:
             for link_failure in link_failures:
                 logging.debug(f"Creating Fat-Tree topology with k={k} ports per switch and link-failure={link_failure}%")
-                results.append(FatTreeTopoCreator(k=k, max_path=1000000, visualize=visualize, link_failure_percent=link_failure, verbose=verbose))
+                results.append(
+                    FatTreeTopoNetworkSimulator(
+                        k=k,
+                        max_path=1000000,
+                        link_failure_percent=link_failure,
+                        verbose=verbose,
+                        verbose_route=verbose_route,
+                    )
+                )
     elif topology == 'hsh':
         for link_failure in link_failures:
             logging.info(f"Creating HSH topology with link-failure={link_failure}%")
-            results.append(HSHCreator(visualize, link_failure_percent=link_failure, max_path=3, verbose=verbose))
+            results.append(
+                HSHNetworkSimulator(
+                    max_path=3,
+                    link_failure_percent=link_failure,
+                    verbose=verbose,
+                    verbose_route=verbose_route,
+                )
+            )
     elif topology == 'simple-star':
         for link_failure in link_failures:
             logging.info(f"Creating Simple Star topology with link-failure={link_failure}%")
-            results.append(SimpleStarCreator(visualize, link_failure_percent=link_failure, max_path=6, verbose=verbose))
-    elif topology == 'circle':
-        for link_failure in link_failures:
-            logging.info(f"Creating Circle topology with link-failure={link_failure}%")
-            results.append(CircleCreator(visualize=visualize, link_failure_percent=link_failure, max_path=32, verbose=verbose))
+            results.append(
+                SimpleStarNetworkSimulator(
+                    max_path=6,
+                    link_failure_percent=link_failure,
+                    verbose=verbose,
+                    verbose_route=verbose_route,
+                )
+            )
     elif topology == 'ai-factory-su':
         for link_failure in link_failures:
             logging.info(f"Creating AI-Factory SU topology with link-failure={link_failure}%")
-            results.append(AIFactorySUCreator(visualize=visualize, link_failure_percent=link_failure, max_path=64, verbose=verbose))
+            results.append(
+                AIFactorySUNetworkSimulator(
+                    max_path=64,
+                    link_failure_percent=link_failure,
+                    verbose=verbose,
+                    verbose_route=verbose_route,
+                )
+            )
     else:
-        raise ValueError(f"Unknown topology '{args.t}'. Valid options: fat-tree, hsh, simple-star, circle, ai-factory-su")
+        raise ValueError(f"Unknown topology '{args.t}'. Valid options: fat-tree, hsh, simple-star, ai-factory-su")
 
     return results
 
 
 def parse_args(argv):
     parser = argparse.ArgumentParser(description='Network simulator runner')
-    parser.add_argument('-t', default='fat-tree',
-                        help='Type of topology: fat-tree, hsh (simplest, for demo), simple-star (simple tree with 2 levels, for demo and debugging), circle, ai-factory-su')
+    parser.add_argument(
+        '-t',
+        default='fat-tree',
+        help='Type of topology: fat-tree, hsh (simplest, for demo), simple-star (simple tree with 2 levels, for demo and debugging), ai-factory-su'
+    )
     parser.add_argument('-k', nargs='+', type=int, default=[4],
                         help='(fat-tree only) list of number of ports per switch (must be even)')
-    parser.add_argument('-visualize', action='store_true', dest='visualize',
-                        help='Enable topology on screen visualization (single boolean flag). If not set, visualizations are still saved to files.')
     parser.add_argument('-link-failure', nargs='+', type=float, default=[0.0],
                         help='list of probability of links to fail in each test. Fraction (0-100) of links to fail')
     parser.add_argument('-message_verbose', required=False, action='store_true', dest='message_verbose', default=False,
                         help='Enable message_verbose logging output to console')
+    parser.add_argument('-verbose_route', required=False, action='store_true', dest='verbose_route', default=False,
+                        help='Enable per-packet verbose route tracking (stores hop-by-hop route for delivered packets)')
+    parser.add_argument('-scenario', default='none',
+                        help='Traffic scenario to run on top of the topology: none, hsh-pingpong, simple-star-all-to-all, fat-tree-deterministic-load')
     return parser.parse_args(argv)
 
 
 def main(argv):
     args = parse_args(argv)
-    logging.info(f"Starting network simulation. topology={args.t}, k={args.k}, visualize={args.visualize}, message_verbose={args.message_verbose}, link-failure={args.link_failure}")
 
-    creators = create_creators_from_args(args)
+    # Re-configure the file logger now that we know which run we're doing.
+    # Keep console logging as-is.
+    set_logger(topology=args.t, scenario=args.scenario)
+
+    logging.info(
+        f"Starting network simulation. topology={args.t}, scenario={args.scenario}, k={args.k}, message_verbose={args.message_verbose}, verbose_route={args.verbose_route}, link-failure={args.link_failure}"
+    )
+
+    scenario = _scenario_from_args(args)
+
+    networks = create_network_from_arg(args)
     aggregated_results = []
-    for creator in creators:
-        simulator = creator.create_simulator()
+    for network in networks:
+        network.create()
+        network.assign_scenario(scenario)
+
         logging.info(f"Starting simulation")
-        simulator.run()
-        logging.info(f"Simulation finished. collecting results")
-        results = creator.get_results()
+        start = time.perf_counter()
+        network.run()
+        elapsed = time.perf_counter() - start
+        logging.info(f"Simulation run time: {elapsed:.3f} seconds")
+        results = network.get_results()
         stats = results['run statistics']
         message = "\n".join(f"{k}: {v}" for k, v in stats.items() if not isinstance(v, List))
         logging.info(f"Simulation stats: \n {message}")
         aggregated_results.append(results)
 
-
-    # pass the single boolean visualize flag so the visualizer can choose
-    # whether to open plots (non-blocking) or only save them
     visualize_experiment_results(aggregated_results)
 
 
+def _sanitize_filename(name: str) -> str:
+    return "".join(c if c.isalnum() or c in "._-" else "_" for c in str(name))
 
 
-def set_logger():
+class _AlignedPrefixFormatter(logging.Formatter):
+    """Formatter that keeps log message bodies aligned by padding *after* the line number.
+
+    We want this layout:
+        time [LEVEL] filename.py:123<spaces> message
+
+    Padding after the line number ensures the filename stays "tight" (no trailing spaces)
+    while the message body starts at a stable column.
+    """
+
+    def __init__(self, prefix_width: int, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._prefix_width = prefix_width
+
+    def format(self, record: logging.LogRecord) -> str:
+        # Compute once per record. logging can call format() multiple times.
+        file_line = f"{record.filename}:{record.lineno}"  # includes the line number
+        pad_len = max(1, self._prefix_width - len(file_line))
+        record.lineno_pad = " " * pad_len
+        return super().format(record)
+
+
+def set_logger(topology: str | None = None, scenario: str | None = None):
     logger = logging.getLogger()
     # set root logger to DEBUG so handlers themselves decide what to record
     logger.setLevel(logging.DEBUG)
@@ -109,37 +192,55 @@ def set_logger():
     for h in logger.handlers[:]:
         logger.removeHandler(h)
 
-    # make log path absolute (script directory) so running from other CWD still creates the file
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    log_path = os.path.join(base_dir, "simulation.log")
-
-    # File handler: keep INFO and above in file to avoid noisy debug output
-    file_handler = logging.FileHandler(log_path, mode="w")
-    file_handler.setLevel(logging.DEBUG)
-
-    # Console-only logging at INFO
-    # IMPORTANT: StreamHandler() defaults to sys.stderr, which many consoles/IDEs display in red.
-    # Use stdout so INFO logs don't look like errors.
+    # Always install a console handler (so early errors are visible).
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.setLevel(logging.INFO)
 
-    formatter = logging.Formatter(
-        "%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d - %(message)s",
-        datefmt="%H:%M:%S"
+    formatter = _AlignedPrefixFormatter(
+        prefix_width=24,
+        fmt="%(asctime)s [%(levelname)s] %(filename)s:%(lineno)d%(lineno_pad)s%(message)s",
+        datefmt="%H:%M:%S",
     )
-    file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
-
-    logger.addHandler(file_handler)
     logger.addHandler(console_handler)
 
-    # Silence matplotlib font_manager and other message_verbose matplotlib debug messages
+    # If topology isn't known yet (bootstrap), don't create a file handler.
+    if not topology:
+        logging.getLogger('matplotlib').setLevel(logging.WARNING)
+        logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+        return
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Log path: always under results/, named by topology (and scenario).
+    results_dir = os.path.join(base_dir, "results")
+    try:
+        os.makedirs(results_dir, exist_ok=True)
+    except Exception:
+        pass
+
+    topo_part = _sanitize_filename(topology)
+    scen_part = _sanitize_filename(scenario) if scenario else None
+
+    if scen_part:
+        log_filename = f"simulation_{topo_part}__{scen_part}.log"
+    else:
+        log_filename = f"simulation_{topo_part}.log"
+
+    log_path = os.path.join(results_dir, log_filename)
+
+    file_handler = logging.FileHandler(log_path, mode="w")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
     logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 
 
 if __name__ == '__main__':
-    set_logger()
+    # Initialize console-only logging early; main() will reconfigure with a file handler once args are parsed.
+    set_logger(topology=None)
     random.seed(1972)
     try:
         main(sys.argv[1:])

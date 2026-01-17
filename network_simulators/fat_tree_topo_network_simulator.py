@@ -1,18 +1,13 @@
-import functools
 import logging
 from typing import Dict, Any
 
-from network_simulation.host import Host
-from network_simulation.simulator_creator import SimulatorCreator
-import random
-
-from network_simulation.switch import Switch
+from network_simulation.network import Network
 
 
-class FatTreeTopoCreator(SimulatorCreator):
+class FatTreeTopoNetworkSimulator(Network):
 
-    def __init__(self, k:int, visualize:bool, max_path:int, link_failure_percent:float=0.0, verbose:bool=False):
-        super().__init__("fat tree", max_path, visualize, link_failure_percent=link_failure_percent, verbose=verbose)
+    def __init__(self, k: int, max_path: int, link_failure_percent: float = 0.0, verbose: bool = False, verbose_route: bool = False):
+        super().__init__("fat tree", max_path, link_failure_percent=link_failure_percent, verbose=verbose, verbose_route=verbose_route)
         assert k >= 1
         assert k % 2 == 0
         self.k = k  # Number of ports per switch
@@ -39,7 +34,7 @@ class FatTreeTopoCreator(SimulatorCreator):
                 switch = self.create_switch(edge_switch_name, self.k)
                 for host_index in range(hosts_per_edge_switch):
                     #create host, link to edge switch and set routing
-                    host_name = f'h_{pod_index}_{edge_index}_{host_index}'
+                    host_name = f'h_{pod_index}_{edge_index}_{host_index + 1}'
                     host = self.create_host(host_name, f"10.{pod_index + 1}.{edge_index + 1}.{host_index + 1}")
                     link_name = f'l_{host_name}_{edge_switch_name}'
                     link = self.create_link(link_name, bandwidth=bandwidth, delay=delay)
@@ -107,92 +102,6 @@ class FatTreeTopoCreator(SimulatorCreator):
         logging.info(f"  Aggregation switches: {total_agg_switches} ({agg_switches_per_pod} per pod)")
         logging.info(f"  Edge switches: {total_edge_switches} ({edge_switches_per_pod} per pod)")
         logging.info(f"  Servers (hosts): {total_hosts} ({hosts_per_edge_switch} per edge switch)")
-
-
-    def create_scenario(self):
-        #self.loaded_calls()
-        self.deterministic_loaded_calls()
-
-    def host_calls_itself(self, host):
-        # Example traffic scenario: each host sends a packet to itself after a delay
-        send_time = random.uniform(0.1, 10)  # send between 0.1s and 1.0s
-        def send_message_to_self(source:Host):
-            source.send_to_ip(source.ip_address,f'Self-message from {source.name}', size_bytes=500)
-        self.simulator.schedule_event(send_time, functools.partial(send_message_to_self, host))
-
-    def host_calls_random_host(self, host):
-        # Example traffic scenario: each host sends a packet to a random other host after a delay
-        all_other_host_names = [name for name in self.hosts.keys() if name != host.name]
-        if not all_other_host_names:
-            return
-        dst_host_name = random.choice(all_other_host_names)
-        logging.info(f"Creating random host traffic from {host.name} to {dst_host_name}")
-        dst_host = self.get_entity(dst_host_name)
-        assert dst_host is not None
-        send_time = random.uniform(0.1, 10)  # send between 0.1s and 10.0s
-        def send_message(source:Host, dst_host:Host):
-            source.send_to_ip(dst_host.ip_address,f'Message from {source.name} to {dst_host.name}', size_bytes=1000)
-        self.simulator.schedule_event(send_time, functools.partial(send_message, host, dst_host))
-
-    def loaded_calls(self):
-        messages_pushed_count = 0
-        # Example traffic scenario: each host sends messages to a random other host
-        hosts_names_list = list(self.hosts.keys())
-        index_of_names  = {key: i for i , key in enumerate(hosts_names_list)}
-        hosts_count = len(hosts_names_list)
-        logging.debug(f"loaded_calls: hosts count {hosts_count}")
-        num_messages = 5
-        message_size_bytes = int(1e10 / 8)  # 10Gb
-        time_interval_between_messages = message_size_bytes / 1e9
-        send_times = [i * time_interval_between_messages for i in range(num_messages)]
-
-        def send_message(source: Host, dst_host: Host):
-            #source.send_to_ip(dst_host.ip_address, f'Message from {source.name} to {dst_host.name}',
-            #                  size_bytes=message_size_bytes)
-            source.send_to_ip(dst_host.ip_address, f'',
-                              size_bytes=message_size_bytes)
-
-        for host_name, i in index_of_names.items():
-            host = self.hosts[host_name]
-            destination_hosts_indices = random.sample(range(hosts_count-1), num_messages)
-            #don't pick this one
-            destination_hosts_indices = [j if j < i else j + 1 for j in destination_hosts_indices]
-            for j, index in enumerate(destination_hosts_indices):
-                dst_host_name = hosts_names_list[index]
-                dest_host = self.hosts[dst_host_name]
-                send_time = send_times[j]
-                self.simulator.schedule_event(send_time, functools.partial(send_message, host, dest_host))
-                messages_pushed_count += 1
-        logging.info(f"loaded_calls: scheduled total of {messages_pushed_count} messages among hosts")
-    def deterministic_loaded_calls(self):
-        messages_pushed_count = 0
-        # Example traffic scenario: each host sends messages to a random other host
-        hosts_names_list = list(self.hosts.keys())
-        index_of_names  = {key: i for i , key in enumerate(hosts_names_list)}
-        hosts_count = len(hosts_names_list)
-        logging.debug(f"loaded_calls: hosts count {hosts_count}")
-        num_messages = 100
-        message_size_bytes = int(1e10 / 8)  # 10Gb
-        time_interval_between_messages = 0# message_size_bytes / 1e9
-        send_times = [i * time_interval_between_messages for i in range(num_messages)]
-        hosts_in_pod_count = (self.k // 2)**2
-
-        def send_message(source: Host, dst_host: Host):
-            #source.send_to_ip(dst_host.ip_address, f'Message from {source.name} to {dst_host.name}',
-            #                  size_bytes=message_size_bytes)
-            source.send_to_ip(dst_host.ip_address, f'',
-                              size_bytes=message_size_bytes)
-
-        for host_name, i in index_of_names.items():
-            host = self.hosts[host_name]
-            destination_host_index= (i + hosts_in_pod_count + 17) % hosts_count
-            dst_host_name = hosts_names_list[destination_host_index]
-            dest_host = self.hosts[dst_host_name]
-            for j in range(num_messages):
-                send_time = send_times[j]
-                self.simulator.schedule_event(0, functools.partial(send_message, host, dest_host))
-                messages_pushed_count += 1
-        logging.info(f"loaded_calls: scheduled total of {messages_pushed_count} messages among hosts")
 
 
     @property

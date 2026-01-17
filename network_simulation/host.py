@@ -12,8 +12,8 @@ flow_ids = itertools.count(1)
 
 
 class Host(NetworkNode):
-    def __init__(self, name: str, scheduler: DiscreteEventSimulator, ip_address: str, message_verbose: bool = False, max_path: int | None = None, ports_count: int = 1):
-        super().__init__(name, ports_count, scheduler, message_verbose=message_verbose)
+    def __init__(self, name: str, scheduler: DiscreteEventSimulator, ip_address: str, message_verbose: bool = False, verbose_route: bool = False, max_path: int | None = None, ports_count: int = 1):
+        super().__init__(name, ports_count, scheduler, message_verbose=message_verbose, verbose_route=verbose_route)
         self._ip_address: str = ip_address
         self._received_count: int = 0
         self.max_path: int | None = max_path
@@ -44,10 +44,10 @@ class Host(NetworkNode):
                 global_id = packet_global_id,
                 sender = self.name,
                 birth_time = self.scheduler.get_current_time(),
-                path_length = 0,
-                verbose_path = None)
-            if self.message_verbose:
-                tracking_info.verbose_path = [self.name]
+                route_length = 0,
+                verbose_route = None)
+            if self.verbose_route:
+                tracking_info.verbose_route = [self.name]
             packet = Packet(header=header,
                             app_info=app_header,
                             tracking_info=tracking_info,
@@ -56,30 +56,15 @@ class Host(NetworkNode):
             self._internal_send_packet(packet)
 
 
-    def send_to_ip(self, dst_ip_address: str, payload: bytes | str | None, size_bytes: int) -> None:
-        """Convenience wrapper used by tests.
-
-        Sends a single-packet UDP payload with default ports.
-        """
-        self.send_message(
-            app_id=0,
-            session_id=next(flow_ids),
-            dst_ip_address=dst_ip_address,
-            source_port=0,
-            dest_port=0,
-            size_bytes=size_bytes,
-            protocol=Protocol.UDP,
-            message=payload.decode() if isinstance(payload, (bytes, bytearray)) else payload,
-        )
-
     def on_message(self, packet: Packet):
         packet.tracking_info.delivered = True
         packet.tracking_info.arrival_time = self.scheduler.get_current_time()
         self._received_count += 1
         if self.message_verbose:
-            logging.debug(f"Received message: {packet}"
-                          f"[{self.scheduler.get_current_time():.6f}s] Host {self.name} received message {packet.tracking_info.global_id} "
-                          f"from {packet.tracking_info.sender} with content: {packet.content}")
+            now = self.scheduler.get_current_time()
+            logging.debug(
+                f"[t={now:.6f}s] Host {self.name} received message {packet.tracking_info.global_id} "
+                f"from {packet.tracking_info.sender} with content: {packet.content} (packet={packet})")
 
     @property
     def received_count(self) -> int:

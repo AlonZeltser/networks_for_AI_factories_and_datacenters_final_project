@@ -3,6 +3,7 @@ import unittest
 from des.des import DiscreteEventSimulator
 from network_simulation.host import Host
 from network_simulation.link import Link
+from network_simulation.packet import Protocol
 
 
 class TestPortQueue(unittest.TestCase):
@@ -23,8 +24,30 @@ class TestPortQueue(unittest.TestCase):
         h2.set_ip_routing("10.0.0.1/32", 1)
 
         # Create 2 packets at time 0. They should serialize on the link.
-        h1.send_to_ip("10.0.0.2", b"a", size_bytes=1000)  # 0.008s serialization
-        h1.send_to_ip("10.0.0.2", b"b", size_bytes=1000)
+        # unit_tests/network_sim_tests/test_port_queue.py
+
+        # Create 2 packets at time 0. They should serialize on the link.
+        h1.send_message(
+            app_id=1,
+            session_id=1,
+            dst_ip_address="10.0.0.2",
+            source_port=12345,
+            dest_port=80,
+            size_bytes=1000,  # 0.008s serialization
+            protocol=Protocol.UDP,
+            message="a",
+        )
+        h1.send_message(
+            app_id=1,
+            session_id=1,
+            dst_ip_address="10.0.0.2",
+            source_port=12345,
+            dest_port=80,
+            size_bytes=1000,
+            protocol=Protocol.UDP,
+            message="b",
+        )
+
 
         # Immediately after enqueuing, we should have a backlog (at least 1 waiting).
         self.assertGreaterEqual(h1.port_queue_size(1), 1)

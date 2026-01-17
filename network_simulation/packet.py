@@ -52,8 +52,8 @@ class PacketTrackingInfo:
     global_id: int
     sender: str
     birth_time: float
-    path_length: int = 0
-    verbose_path: list[str] | None = None  # only when packet_verbose enabled
+    route_length: int = 0
+    verbose_route: list[str] | None = None  # only when verbose_route tracking is enabled
     delivered: bool = False
     arrival_time: Optional[float] = None
 
@@ -92,4 +92,3 @@ class Packet:
     @arrival_time.setter
     def arrival_time(self, value: Optional[float]) -> None:
         self.tracking_info.arrival_time = value
-

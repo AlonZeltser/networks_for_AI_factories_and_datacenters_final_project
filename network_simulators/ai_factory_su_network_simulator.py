@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import logging
 
-from network_simulation.simulator_creator import SimulatorCreator
+from network_simulation.network import Network
 
 
-class AIFactorySUCreator(SimulatorCreator):
+class AIFactorySUNetworkSimulator(Network):
     """A topology inspired by NVIDIA's AI-Factory Scalable Unit (SU).
 
     We simulate everything over Ethernet.
@@ -40,14 +40,14 @@ class AIFactorySUCreator(SimulatorCreator):
 
     BW_400G = 400e9
 
-    def __init__(self, visualize: bool, max_path: int,
-                 link_failure_percent: float = 0.0, verbose: bool = False):
+    def __init__(self, max_path: int,
+                 link_failure_percent: float = 0.0, verbose: bool = False, verbose_route: bool = False):
         super().__init__(
             name="ai-factory-su",
             max_path=max_path,
-            visualize=visualize,
             link_failure_percent=link_failure_percent,
             verbose=verbose,
+            verbose_route=verbose_route,
         )
         self._identifier = {
             "topology": "ai-factory-su",
@@ -166,10 +166,6 @@ class AIFactorySUCreator(SimulatorCreator):
             f"AI-Factory SU topology created: leaves={self.LEAVES}, spines={self.SPINES}, "
             f"servers={self.LEAVES * self.SERVERS_PER_LEAF}, links={len(self.links)}"
         )
-
-    def create_scenario(self):
-        # Topology-only: intentionally no traffic.
-        return
 
     @property
     def identifier(self):
