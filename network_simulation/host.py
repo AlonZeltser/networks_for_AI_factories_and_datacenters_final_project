@@ -36,7 +36,26 @@ class Host(NetworkNode):
         return self._ip_address
 
 
-    def send_message(self, app_id:int, session_id:int, dst_ip_address: str, source_port: int, dest_port: int, size_bytes, protocol:Protocol) -> None:
+    def send_message(
+        self,
+        session_id: int,
+        dst_ip_address: str,
+        source_port: int,
+        dest_port: int,
+        size_bytes: int,
+        protocol: Protocol,
+        **_kwargs,
+    ) -> None:
+        """Send a bulk message from this Host.
+
+        Notes:
+        - `session_id` is the value that becomes `PacketTransport.flow_id` and is used by higher layers
+          (including the AI-factory layer) to join on flow completion.
+        - `app_id` is currently unused (kept only for backward compatibility with older scenarios).
+        """
+        #logging.debug(f"[t={self.scheduler.get_current_time():.6f}s] Host {self.name} sending message "
+        #              f"session_id={session_id} to {dst_ip_address} size={size_bytes}B protocol={protocol.name}")
+
         packet_count = (size_bytes + ENV.mtu - 1) // ENV.mtu
         for i in range(packet_count):
             packet_size = ENV.mtu if i < packet_count - 1 else size_bytes - ENV.mtu * (packet_count - 1)
@@ -53,10 +72,10 @@ class Host(NetworkNode):
                 flow_seq=i
             )
             tracking_info = PacketTrackingInfo(
-                global_id = packet_global_id,
-                birth_time = self.scheduler.get_current_time(),
-                route_length = 0,
-                verbose_route = None)
+                global_id=packet_global_id,
+                birth_time=self.scheduler.get_current_time(),
+                route_length=0,
+                verbose_route=None)
             if self.verbose_route:
                 tracking_info.verbose_route = [self.name]
             packet = Packet(routing_header=header,

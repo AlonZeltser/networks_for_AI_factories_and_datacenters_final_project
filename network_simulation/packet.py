@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Optional
+from typing import Optional
 
 import xxhash
+
+from network_simulation.ip import IPAddress
 
 
 class Protocol(Enum):
@@ -19,12 +21,23 @@ class FiveTuple:
     dst_protocol_port: int
     protocol: Protocol
 
+    # Cached int forms (computed once when the FiveTuple is created).
+    src_ip_int: int = field(init=False, repr=False)
+    dst_ip_int: int = field(init=False, repr=False)
+    _hash: int = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.src_ip_int = IPAddress.parse(self.src_ip).to_int()
+        self.dst_ip_int = IPAddress.parse(self.dst_ip).to_int()
+        # Cache hash once; __hash__ should be stable and fast.
+        self._hash = xxhash.xxh64(str(self)).intdigest()
+
     def __str__(self) -> str:
         return (f"{self.src_ip}:{self.src_protocol_port} -> "
                 f"{self.dst_ip}:{self.dst_protocol_port} ({self.protocol.name})")
 
     def __hash__(self) -> int:
-        return xxhash.xxh64(str(self)).intdigest()
+        return self._hash
 
 
 @dataclass

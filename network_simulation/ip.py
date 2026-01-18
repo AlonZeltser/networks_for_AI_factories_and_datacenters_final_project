@@ -1,3 +1,11 @@
+"""IP address helpers.
+
+This module contains helpers for working with IP address allocations and naming conventions.
+
+(Note: older versions of this project used these helpers for specific topologies; they are kept
+as general utilities.)
+"""
+
 from dataclasses import dataclass
 from typing import Tuple, Union
 
@@ -7,7 +15,7 @@ class IPAddress:
     """Simple IPv4 address value object.
 
     Internally stores four octets (0-255). Provides parsing from string/int and
-    helpers useful for fat-tree addressing (pod/edge/host extraction).
+    some convenience helpers.
     """
     octets: Tuple[int, int, int, int]
 
@@ -21,14 +29,16 @@ class IPAddress:
         if isinstance(value, (tuple, list)):
             if len(value) != 4:
                 raise ValueError("Tuple must have four elements")
-            octets = tuple(int(x) for x in value)
+            o1, o2, o3, o4 = (int(value[0]), int(value[1]), int(value[2]), int(value[3]))
+            octets: Tuple[int, int, int, int] = (o1, o2, o3, o4)
             cls._validate_octets(octets)
             return cls(octets)
         if isinstance(value, str):
             parts = value.strip().split('.')
             if len(parts) != 4:
                 raise ValueError(f"Invalid IPv4 string: {value}")
-            octets = tuple(int(p) for p in parts)
+            o1, o2, o3, o4 = (int(parts[0]), int(parts[1]), int(parts[2]), int(parts[3]))
+            octets: Tuple[int, int, int, int] = (o1, o2, o3, o4)
             cls._validate_octets(octets)
             return cls(octets)
         raise TypeError("Unsupported type for IPAddress.parse")

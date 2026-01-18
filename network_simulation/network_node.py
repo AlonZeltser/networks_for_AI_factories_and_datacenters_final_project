@@ -1,8 +1,9 @@
 import logging
+import random
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import defaultdict, deque
 from enum import Enum
-from typing import Dict, List
+from typing import Deque, Dict, List, Tuple
 
 from des.des import DiscreteEventSimulator
 from network_simulation.ip import IPPrefix
@@ -25,13 +26,24 @@ class NetworkNode(ABC):
         # --- actor basics (formerly Node) ---
         self.name = name
         self.scheduler = scheduler
-        self.inbox: List[Packet] = []
+        self.inbox: Deque[Packet] = deque()
+        self._handle_scheduled: bool = False
         self.message_verbose = message_verbose
         self.verbose_route = verbose_route
 
         # --- networking ---
         self.ports: List[Port] = [Port(i, self) for i in range(ports_count)]
+
+        # Backward-compatible map (kept mostly for debugging/introspection).
         self.ip_forward_table: Dict[str, List[int]] = defaultdict(list)
+
+        # Fast-path compiled table for routing lookups.
+        # Bucketed by prefix_len so we can stop early on first match.
+        # prefix_len -> list[(net_int, mask_int, port_index)]
+        self._ip_forward_compiled_by_len: dict[int, list[Tuple[int, int, int]]] = defaultdict(list)
+        self._compiled_prefix_lens_desc: list[int] = []
+        self._compiled_prefix_lens_set: set[int] = set()
+
         self.routing_mode = routing_mode
 
     # called by others, to make this actor receive a packet
@@ -43,16 +55,18 @@ class NetworkNode(ABC):
         if self.verbose_route and packet.tracking_info.verbose_route is not None:
             packet.tracking_info.verbose_route.append(self.name)
         self.inbox.append(packet)
-        self.scheduler.schedule_event(0.0, self.handle_message)
+        if not self._handle_scheduled:
+            self._handle_scheduled = True
+            self.scheduler.schedule_event(0.0, self.handle_message)
 
     # handling received messages
     # empty the inbox one by one, by scheduling handle_message events to this time step
     def handle_message(self):
-        if self.inbox:
-            message = self.inbox.pop(0)
+        # Drain the inbox for this time slice.
+        while self.inbox:
+            message = self.inbox.popleft()
             self.on_message(message)
-            if self.inbox:
-                self.scheduler.schedule_event(0.0, self.handle_message)
+        self._handle_scheduled = False
 
     @abstractmethod
     def on_message(self, packet: Packet):
@@ -99,43 +113,60 @@ class NetworkNode(ABC):
         assert 1 <= port_id <= len(self.ports)
         index = port_id - 1
         port = self.ports[index]
-        if not getattr(port.link, 'failed'):
-            self.ip_forward_table[ip_prefix].append(index)
+        if getattr(port.link, 'failed'):
+            return
+
+        # Keep the old structure for introspection.
+        self.ip_forward_table[ip_prefix].append(index)
+
+        # Compile the prefix once for fast matching.
+        pfx = IPPrefix.from_string(ip_prefix)
+        net_int = pfx.network.to_int()
+        mask_int = IPPrefix._mask_from_prefix(pfx.prefix_len)
+        self._ip_forward_compiled_by_len[pfx.prefix_len].append((net_int, mask_int, index))
+
+        # Maintain descending list of prefix lengths for LPM scan.
+        if pfx.prefix_len not in self._compiled_prefix_lens_set:
+            self._compiled_prefix_lens_set.add(pfx.prefix_len)
+            self._compiled_prefix_lens_desc.append(pfx.prefix_len)
+            self._compiled_prefix_lens_desc.sort(reverse=True)
 
     def select_port_for_packet(self, packet: Packet) -> int | None:
-        dst_ip = packet.routing_header.five_tuple.dst_ip
+        # Use cached integer dst-ip to avoid parsing at every hop.
+        dst_int = packet.routing_header.five_tuple.dst_ip_int
 
-        # Find ports that match prefix to the destination IP
-        relevant_ports: list[tuple[int, int]] = [
-            (p_id, IPPrefix.from_string(prefix_str).prefix_len)
-            for prefix_str, port_ids in self.ip_forward_table.items()
-            if IPPrefix.from_string(prefix_str).contains(dst_ip)
-            for p_id in port_ids
-        ]
-        # If any relevant ports found, apply Longest Prefix Match, since it implies shortest path
-        if relevant_ports:
-            # Longest Prefix Match: choose the port with the longest matching prefix
-            relevant_ports.sort(key=lambda x: x[1], reverse=True)
-            longest_mask_len = relevant_ports[0][1]
-            best_masked_ports = [p for p in relevant_ports if p[1] == longest_mask_len]
-            assert best_masked_ports  # at least one port must exist here
-            if self.routing_mode == RoutingMode.ECMP:
-                # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
-                # flow sticks to one path to avoid reordering
-                port_index = hash(packet.routing_header.five_tuple) % len(best_masked_ports)
-                best_port_id = best_masked_ports[port_index][0]
-                return best_port_id
-            else:
-                ports_lengths = [self.ports[p[0]].queue_size() for p in best_masked_ports]
-                min_length = min(ports_lengths)
-                min_length_ports = [best_masked_ports[i][0] for i, l in enumerate(ports_lengths) if l == min_length]
-                # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
-                # flow sticks to one path to avoid reordering
-                port_index = hash(packet.routing_header.five_tuple) % len(min_length_ports)
-                best_port_id = min_length_ports[port_index]
-                return best_port_id
-        else:
+        # Longest-prefix match by scanning prefix lengths descending.
+        best_ports: list[int] = []
+        for plen in self._compiled_prefix_lens_desc:
+            entries = self._ip_forward_compiled_by_len.get(plen)
+            if not entries:
+                continue
+
+            for net_int, mask_int, port_idx in entries:
+                if (dst_int & mask_int) == net_int:
+                    best_ports.append(port_idx)
+
+            if best_ports:
+                break
+
+        if not best_ports:
             return None
+
+        if self.routing_mode == RoutingMode.ECMP:
+            return best_ports[hash(packet.routing_header.five_tuple) % len(best_ports)]
+
+        # ADAPTIVE: pick uniformly among the ports with the smallest current queue.
+        min_len = None
+        min_ports: list[int] = []
+        for p in best_ports:
+            qlen = self.ports[p].queue_size()
+            if (min_len is None) or (qlen < min_len):
+                min_len = qlen
+                min_ports = [p]
+            elif qlen == min_len:
+                min_ports.append(p)
+
+        return random.choice(min_ports)
 
 
     def _internal_send_packet(self, packet: Packet) -> None:

@@ -42,7 +42,7 @@ class HSHPingPongScenario(Scenario):
 
 
         creator.simulator.schedule_event(0, e1)
-        #creator.simulator.schedule_event(0, e2)
+        #network.simulator.schedule_event(0, e2)
 
     def parameters_summary(self):
         out = super().parameters_summary()

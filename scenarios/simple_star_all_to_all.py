@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from network_simulation.packet import Protocol
 
 from network_simulation.scenario import Scenario
 
@@ -26,7 +27,7 @@ class SimpleStarAllToAllScenario(Scenario):
                         source_port=1000,
                         dest_port=2000,
                         size_bytes=int(self.message_size_bytes),
-                        protocol=None,
+                        protocol=Protocol.UDP,
                         message=f'Message from {source.name} to {destination.name}'
                     )
 

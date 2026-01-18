@@ -109,11 +109,11 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
         print("No nodes to visualize in the topology.")
         return None
 
-    # Prefer a layered tree-like layout (core -> aggregation -> edge -> hosts) when node naming follows
-    # the fat-tree conventions. Otherwise fall back to graphviz or spring layout.
+    # Prefer a layered tree-like layout when node naming follows common conventions.
+    # Otherwise fall back to graphviz or spring layout.
     layers = []  # initialize so it's available for sizing even if classification fails
     try:
-        # classify nodes by name prefixes commonly used in fat-tree network
+        # classify nodes by name prefixes commonly used in some hierarchical networks
         cores = sorted([n for n in G.nodes() if str(n).startswith('core_switch')])
         aggs = sorted([n for n in G.nodes() if str(n).startswith('agg_switch')])
         edges = sorted([n for n in G.nodes() if str(n).startswith('edge_switch')])
@@ -242,7 +242,7 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
     from collections import defaultdict
 
     pair_to_keys = defaultdict(list)  # (min(u,v), max(u,v)) -> [edge_key,...]
-    for u, v, key in G.edges(keys=True):
+    for u, v, key, _data in G.edges(keys=True, data=True):
         pair = tuple(sorted((u, v)))
         pair_to_keys[pair].append(key)
 
