@@ -42,8 +42,7 @@ class FatTreeDeterministicLoadScenario(Scenario):
                 source_port=1000,
                 dest_port=2000,
                 size_bytes=int(self.message_size_bytes),
-                protocol=Protocol.UDP,
-                message=f'Message from {source.name} to {dst_host.name}'
+                protocol=Protocol.UDP
             )
 
         for host_name, i in index_of_names.items():

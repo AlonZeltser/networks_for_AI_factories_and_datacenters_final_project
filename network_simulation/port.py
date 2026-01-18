@@ -41,7 +41,7 @@ class Port:
         """Queue a packet for transmission and schedule a drain attempt."""
         if getattr(self.link, "failed", False):
             # Should normally be filtered by routing logic. But be defensive.
-            packet.header.dropped = True
+            packet.routing_header.dropped = True
             return
 
         self.egress_queue.append(packet)

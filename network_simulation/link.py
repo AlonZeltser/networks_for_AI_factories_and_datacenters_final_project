@@ -44,9 +44,9 @@ class Link:
             """
         #assert now == self.next_available_time[link_index], f"Link {self.name} transmit called too early on port {sender.port_id} of {sender.owner.name}"
         actual_start_time = now
-        serialization_duration = packet.header.size_bytes * 8.0 / self.bandwidth_bps  # in seconds
+        serialization_duration = packet.routing_header.size_bytes * 8.0 / self.bandwidth_bps  # in seconds
         self.accumulated_transmitting_time += serialization_duration
-        self.accumulated_bytes_transmitted += packet.header.size_bytes
+        self.accumulated_bytes_transmitted += packet.routing_header.size_bytes
         finish_serialization_time = actual_start_time + serialization_duration
         self.next_available_time[link_index] = finish_serialization_time
         arrival_time = finish_serialization_time + self.propagation_time

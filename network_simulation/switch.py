@@ -13,11 +13,11 @@ class Switch(NetworkNode):
             if self.message_verbose:
                 now = self.scheduler.get_current_time()
                 logging.warning(
-                    f"[t={now:.6f}s] Switch {self.name} dropping expired message {packet.tracking_info.global_id} to {packet.header.five_tuple.dst_ip}")
-            packet.header.dropped = True
+                    f"[t={now:.6f}s] Switch {self.name} dropping expired message {packet.tracking_info.global_id} to {packet.routing_header.five_tuple.dst_ip}")
+            packet.routing_header.dropped = True
         else:
             if self.message_verbose:
                 now = self.scheduler.get_current_time()
                 logging.debug(
-                    f"[t={now:.6f}s] Switch {self.name} received message {packet.tracking_info.global_id} to {packet.header.five_tuple.dst_ip}")
+                    f"[t={now:.6f}s] Switch {self.name} received message {packet.tracking_info.global_id} to {packet.routing_header.five_tuple.dst_ip}")
             self._internal_send_packet(packet)

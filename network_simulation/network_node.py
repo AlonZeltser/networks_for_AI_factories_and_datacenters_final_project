@@ -38,7 +38,7 @@ class NetworkNode(ABC):
     # messages are not handled immediately, but scheduled to be handled at the current time step
     # the reason is to avoid deep recursion when messages are posted in response to receiving messages
     def post(self, packet: Packet) -> None:
-        packet.header.ttl -= 1
+        packet.routing_header.ttl -= 1
         packet.tracking_info.route_length += 1
         if self.verbose_route and packet.tracking_info.verbose_route is not None:
             packet.tracking_info.verbose_route.append(self.name)
@@ -103,7 +103,7 @@ class NetworkNode(ABC):
             self.ip_forward_table[ip_prefix].append(index)
 
     def select_port_for_packet(self, packet: Packet) -> int | None:
-        dst_ip = packet.header.five_tuple.dst_ip
+        dst_ip = packet.routing_header.five_tuple.dst_ip
 
         # Find ports that match prefix to the destination IP
         relevant_ports: list[tuple[int, int]] = [
@@ -122,7 +122,7 @@ class NetworkNode(ABC):
             if self.routing_mode == RoutingMode.ECMP:
                 # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
                 # flow sticks to one path to avoid reordering
-                port_index = hash(packet.header.five_tuple) % len(best_masked_ports)
+                port_index = hash(packet.routing_header.five_tuple) % len(best_masked_ports)
                 best_port_id = best_masked_ports[port_index][0]
                 return best_port_id
             else:
@@ -131,7 +131,7 @@ class NetworkNode(ABC):
                 min_length_ports = [best_masked_ports[i][0] for i, l in enumerate(ports_lengths) if l == min_length]
                 # If multiple best ports, choose one based on hash of the five-tuple for ECMP:
                 # flow sticks to one path to avoid reordering
-                port_index = hash(packet.header.five_tuple) % len(min_length_ports)
+                port_index = hash(packet.routing_header.five_tuple) % len(min_length_ports)
                 best_port_id = min_length_ports[port_index]
                 return best_port_id
         else:
@@ -151,8 +151,8 @@ class NetworkNode(ABC):
             if self.message_verbose:
                 now = self.scheduler.get_current_time()
                 logging.warning(
-                    f"[t={now:.6f}s] {self.name} has no routing entry for destination IP {packet.header.five_tuple.dst_ip}, dropping message")
-            packet.header.dropped = True
+                    f"[t={now:.6f}s] {self.name} has no routing entry for destination IP {packet.routing_header.five_tuple.dst_ip}, dropping message")
+            packet.routing_header.dropped = True
 
 
     @property

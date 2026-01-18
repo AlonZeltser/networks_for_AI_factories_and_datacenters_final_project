@@ -108,9 +108,9 @@ class Network(ABC):
         parameters_summary = self.get_parameters_summary()
 
         total_time = self.simulator.end_time
-        messages_count = len(self.simulator.packets)
-        messages_delivered_straight_count = len([m for m in self.simulator.packets if m.delivered])
-        dropped_message_count = len([p for p in self.simulator.packets if p.header.dropped])
+        packets_count = len(self.simulator.packets)
+        delivered_packets_count = len([m for m in self.simulator.packets if m.delivered])
+        dropped_packets_count = len([p for p in self.simulator.packets if p.routing_header.dropped])
         route_lengths = [p.tracking_info.route_length for p in self.simulator.packets if p.delivered]
         trans_times = [link.accumulated_transmitting_time for link in self.links]
         links_average_delivery_time = float(sum(trans_times)) / float(len(trans_times)) if len(trans_times) > 0 else 0.0
@@ -119,14 +119,14 @@ class Network(ABC):
         links_average_utilization_percentage = (float(total_data) / float(total_bandwidth_time))*100 if total_bandwidth_time > 0 else 0.0
 
         run_statistics = {
-            'messages count': messages_count,
+            'total packets count': packets_count,
             'total run time (simulator time in seconds)': self.simulator.end_time,
-            'delivered messages count': messages_delivered_straight_count,
-            'delivered messages percentage': (
-                        messages_delivered_straight_count / messages_count * 100.0) if messages_count > 0 else 0.0,
-            'dropped messages count': dropped_message_count,
-            'dropped messages percentage': (
-                        dropped_message_count / messages_count * 100.0) if messages_count > 0 else 0.0,
+            'delivered packets count': delivered_packets_count,
+            'delivered packets percentage': (
+                        delivered_packets_count / packets_count * 100.0) if packets_count > 0 else 0.0,
+            'dropped packets count': dropped_packets_count,
+            'dropped packets percentage': (
+                        dropped_packets_count / packets_count * 100.0) if packets_count > 0 else 0.0,
             'avg route length': float(sum(route_lengths)) / float(len(route_lengths)) if route_lengths else 0.0,
             'max route length': max(route_lengths) if route_lengths else 0,
             'min route length': min(route_lengths) if route_lengths else 0,

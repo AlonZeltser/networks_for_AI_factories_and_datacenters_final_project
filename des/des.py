@@ -1,4 +1,5 @@
 import itertools
+import logging
 from dataclasses import field, dataclass
 from typing import Callable
 
@@ -36,10 +37,13 @@ class DiscreteEventSimulator:
 
     def run(self) -> None:
         """Run the simulation until there are no more events."""
+        counter = 0
         while self.event_queue:
+            counter += 1
             event = self.event_queue.dequeue()
             self.current_time = event.time
             event.action()
+        logging.debug("DES ended after %d events", counter)
         self.end_time = self.current_time
 
     def get_current_time(self) -> float:
