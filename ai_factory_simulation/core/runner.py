@@ -29,6 +29,11 @@ class FlowInjector:
         raise NotImplementedError
 
 
+def _sim_time_prefix(sim: DiscreteEventSimulator) -> str:
+    """Format simulator time prefix for aligned logging."""
+    return f"[sim_t={sim.get_current_time():012.6f}s]"
+
+
 @dataclass
 class JobRunner:
     """Event-driven state machine that advances Job -> Step -> Phase.
@@ -51,7 +56,7 @@ class JobRunner:
     def _start_job(self) -> None:
         assert self.metrics is not None
         logging.info(
-            f"JobRunner starting job={self.job.name} id={self.job.job_id} participants={len(self.job.participants)} steps={len(self.job.steps)}"
+            f"{_sim_time_prefix(self.sim)} Job starting       job={self.job.name} id={self.job.job_id} participants={len(self.job.participants)} steps={len(self.job.steps)}"
         )
         self._run_step(step_index=0)
 
@@ -59,10 +64,10 @@ class JobRunner:
         assert self.metrics is not None
         if step_index >= len(self.job.steps):
             self.metrics.end_time = self.sim.get_current_time()
-            logging.info(f"JobRunner finished job id={self.job.job_id} t={self.metrics.end_time:.6f}s")
+            logging.info(f"{_sim_time_prefix(self.sim)} Job finished       job_id={self.job.job_id}")
             return
 
-        logging.debug(f"JobRunner running step={step_index}")
+        logging.debug(f"{_sim_time_prefix(self.sim)} Step starting      step={step_index}")
         step = self.job.steps[step_index]
         step_metrics = StepMetrics(step_id=step.step_id, start_time=self.sim.get_current_time(), end_time=-1.0)
         self.metrics.steps.append(step_metrics)
@@ -72,14 +77,15 @@ class JobRunner:
         assert self.metrics is not None
         step = self.job.steps[step_index]
         step_metrics = self.metrics.steps[-1]
-        logging.debug(f"JobRunner running step={step_index} phase={phase_index}")
 
         if phase_index >= len(step.phases):
             step_metrics.end_time = self.sim.get_current_time()
+            logging.debug(f"{_sim_time_prefix(self.sim)} Step finished      step={step_index}")
             self._run_step(step_index=step_index + 1)
             return
 
         phase = step.phases[phase_index]
+        logging.debug(f"{_sim_time_prefix(self.sim)} Phase starting     step={step_index} phase={phase_index} name={phase.name}")
         phase_metrics = PhaseMetrics(
             phase_id=phase.phase_id,
             name=phase.name,
@@ -90,6 +96,7 @@ class JobRunner:
 
         def done_phase() -> None:
             phase_metrics.end_time = self.sim.get_current_time()
+            logging.debug(f"{_sim_time_prefix(self.sim)} Phase finished     step={step_index} phase={phase_index} name={phase.name}")
             self._run_phase(step_index=step_index, phase_index=phase_index + 1)
 
         if isinstance(phase, ComputePhase):
@@ -104,22 +111,23 @@ class JobRunner:
 
     def _run_comm_phase(self, phase: CommPhase, done_phase: Callable[[], None]) -> None:
         book = BarrierBookkeeper()
-        logging.debug(f"JobRunner running phase={phase.name} phase={phase.phase_id}")
 
         def run_bucket(bucket_index: int) -> None:
-            logging.debug(f"JobRunner running bucket={bucket_index}")
             if bucket_index >= len(phase.buckets):
                 done_phase()
                 return
 
+            logging.debug(f"{_sim_time_prefix(self.sim)} Bucket starting    phase={phase.name} bucket={bucket_index}")
             bucket: Bucket = phase.buckets[bucket_index]
             if not bucket.flows:
+                logging.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index} (empty)")
                 run_bucket(bucket_index + 1)
                 return
 
             join_name = f"phase{phase.phase_id}/bucket{bucket.bucket_id}"
 
             def done_bucket() -> None:
+                logging.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index}")
                 run_bucket(bucket_index + 1)
 
             join = Join(pending={f.flow_id for f in bucket.flows}, on_done=done_bucket)

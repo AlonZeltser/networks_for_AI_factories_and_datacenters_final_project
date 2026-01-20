@@ -1,0 +1,53 @@
+# Example YAML config for the AI Factory Simulation runner.
+# Run:
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/ai_factory_su_dp_heavy_scenario_ecmp.yaml
+
+run:
+  # Logging / debug
+  debug: false
+  message_verbose: false
+  verbose_route: false
+
+  # Output
+  visualize: false
+
+topology:
+  type: ai-factory-su
+  max_path: 64
+  #mtu: 4096  # bytes, maximum transmission unit
+  mtu: 32768  # bytes, maximum transmission unit
+  ttl: 64    # time to live (max hops)
+
+  routing:
+    # Routing mode selection:
+    # - ecmp: hash-based selection among equal-cost next hops
+    # - adaptive: pick among equal-cost next hops with the smallest current egress queue
+    mode: ecmp
+    #mode: adaptive
+
+    # ECMP flowlets (ECMP mode only): rotate chosen next-hop after every N packets of the same flow.
+    # 0 (or missing) disables and reverts to standard hash-ECMP.
+    #ecmp_flowlet_n_packets: 32
+    ecmp_flowlet_n_packets: 64
+
+  links:
+    failure_percent: 2.0
+
+    # Link bandwidths in bits-per-second (bps)
+    bandwidth_bps:
+      server_to_leaf: 4e9
+      leaf_to_spine: 4e9
+
+scenario:
+  name: ai-factory-su-workload1-dp-heavy
+  params:
+    steps: 50
+    seed: 1972
+    num_buckets: 2
+    bucket_bytes_per_participant: 8388608  # 8 MiB
+    #bucket_bytes_per_participant: 33554432  # 32 MB
+    #bucket_bytes_per_participant: 268435456  # 256 MB
+    #gap_us: 0.0000001
+    gap_us: 0.0
+    t_fwd_bwd_ms: 10.0  # Forward-backward compute time in milliseconds
+    optimizer_ms: 5.0   # Optimizer compute time in milliseconds

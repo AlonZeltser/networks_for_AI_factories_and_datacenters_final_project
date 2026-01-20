@@ -4,6 +4,7 @@ from des.des import DiscreteEventSimulator
 from network_simulation.host import Host
 from network_simulation.link import Link
 from network_simulation.packet import Protocol
+from network_simulation.network_node import RoutingMode
 
 
 class TestPortQueue(unittest.TestCase):
@@ -11,8 +12,32 @@ class TestPortQueue(unittest.TestCase):
     def test_port_queue_drains_using_link_availability(self):
         sim = DiscreteEventSimulator()
 
-        h1 = Host("h1", sim, "10.0.0.1", max_path=10)
-        h2 = Host("h2", sim, "10.0.0.2", max_path=10)
+        h1 = Host(
+            name="h1",
+            scheduler=sim,
+            ip_address="10.0.0.1",
+            message_verbose=False,
+            verbose_route=False,
+            max_path=10,
+            ports_count=1,
+            routing_mode=RoutingMode.ECMP,
+            ecmp_flowlet_n_packets=0,
+            mtu=4096,
+            ttl=64,
+        )
+        h2 = Host(
+            name="h2",
+            scheduler=sim,
+            ip_address="10.0.0.2",
+            message_verbose=False,
+            verbose_route=False,
+            max_path=10,
+            ports_count=1,
+            routing_mode=RoutingMode.ECMP,
+            ecmp_flowlet_n_packets=0,
+            mtu=4096,
+            ttl=64,
+        )
 
         # 1 Mbps, 0 propagation delay.
         link = Link("l1", sim, bandwidth_bps=1e6, propagation_time=0.0)
@@ -61,4 +86,3 @@ class TestPortQueue(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

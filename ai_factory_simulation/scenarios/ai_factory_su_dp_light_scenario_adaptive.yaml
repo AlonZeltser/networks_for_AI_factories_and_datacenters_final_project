@@ -1,0 +1,37 @@
+# Light YAML config for the AI Factory Simulation runner (fast-ish runs).
+# Use this for batch runs.
+
+run:
+  debug: false
+  message_verbose: false
+  verbose_route: false
+  visualize: false
+
+topology:
+  type: ai-factory-su
+  max_path: 64
+  mtu: 4096  # bytes, maximum transmission unit
+  ttl: 64    # time to live (max hops)
+
+  routing:
+    mode: adaptive
+    ecmp_flowlet_n_packets: 512
+
+  links:
+    failure_percent: 0.0
+    bandwidth_bps:
+      server_to_leaf: 400e9
+      leaf_to_spine: 400e9
+
+scenario:
+  name: ai-factory-su-workload1-dp-heavy
+  params:
+    # Keep small so it finishes fast.
+    steps: 1
+    seed: 1972
+    num_buckets: 1
+    bucket_bytes_per_participant: 1048576  # 1 MiB
+    gap_us: 0.0000001
+    t_fwd_bwd_ms: 100.0  # Forward-backward compute time in milliseconds
+    optimizer_ms: 50.0   # Optimizer compute time in milliseconds
+

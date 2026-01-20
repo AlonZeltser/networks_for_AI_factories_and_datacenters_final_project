@@ -1,5 +1,7 @@
 # Ensure logging is configured before importing modules that may alter logging behavior
 from log_setup import ensure_logging
+from network_simulation.network_node import RoutingMode
+
 ensure_logging()
 
 import argparse
@@ -37,6 +39,8 @@ def _network_from_topology(topology: str, *, link_failure_percent: float, messag
             link_failure_percent=link_failure_percent,
             verbose=message_verbose,
             verbose_route=verbose_route,
+            routing_mode=RoutingMode.ECMP,
+            ecmp_flowlet_n_packets=1,
         )
     if topology == "simple-star":
         return SimpleStarNetworkSimulator(
@@ -44,12 +48,19 @@ def _network_from_topology(topology: str, *, link_failure_percent: float, messag
             link_failure_percent=link_failure_percent,
             verbose=message_verbose,
             verbose_route=verbose_route,
+            routing_mode=RoutingMode.ECMP,
+            ecmp_flowlet_n_packets=1,
         )
     raise ValueError("Unknown topology. Valid: hsh, simple-star")
 
 
 def parse_args(argv):
-    p = argparse.ArgumentParser(description="Quick testing runner (HSH + Simple-Star only)")
+    p = argparse.ArgumentParser(
+        description=(
+            "Quick testing runner (HSH + Simple-Star only). "
+            "For AI-Factory SU (including bucket params like num_buckets), use ai_factory_network_simulation.py + YAML."
+        )
+    )
     p.add_argument("topology", help="Topology name: hsh or simple-star")
     p.add_argument("scenario", help="Scenario name: none, hsh-pingpong, simple-star-all-to-all")
     # These flags are optional but useful for local debugging without reintroducing a huge CLI surface.
@@ -62,16 +73,16 @@ def parse_args(argv):
 def main(argv) -> int:
     args = parse_args(argv)
 
-    # Configure per-run logging: console + per-run file with run name topology.scenario
+    # Configure per-run logging: INFO+ to console, DEBUG to a per-run logfile.
     try:
         from log_setup import configure_run_logging
-        logfile_path = configure_run_logging(args.topology, args.scenario)
-        logging.info(f"Logging to console and file: {logfile_path}")
-    except Exception:
-        logfile_path = None
 
-    # Per-run logging already configured by configure_run_logging above. Do not
-    # reconfigure logging here (would overwrite the per-run file handler).
+        run_tag = f"{args.topology}.{args.scenario}"
+        logfile_path = configure_run_logging(run_tag)
+        logging.info("Logging to console and file: %s", logfile_path)
+    except Exception:
+        # Fall back to console-only logging.
+        pass
 
     scenario = _scenario_from_name(args.scenario)
     network = _network_from_topology(
@@ -81,7 +92,7 @@ def main(argv) -> int:
         verbose_route=args.verbose_route,
     )
 
-    network.create()
+    network.create(True)
     network.assign_scenario(scenario)
 
     logging.info("Starting simulation")

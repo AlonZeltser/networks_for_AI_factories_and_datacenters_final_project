@@ -1,7 +1,7 @@
 import datetime
 import logging
 import os
-from typing import Optional, Dict, Any, Sequence, Union
+from typing import Optional, Dict, Any
 
 
 def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float = 2.0, show: bool = True) -> Optional[
@@ -399,57 +399,12 @@ def visualize_topology(topop_name: str, entities: Dict[Any, Any], spacing: float
     return saved_path
 
 
-def plot_hosts_received_histogram(hosts_received: Union[Dict[str, int], Sequence[int]], run_name: str,
-                                  out_dir: str = 'results/experiments') -> Optional[str]:
-    """Plot a histogram of how many messages each host received in a run.
+def plot_hosts_received_histogram(*args, **kwargs):
+    """Deprecated/removed.
 
-    hosts_received: mapping host_name -> received_count
-    run_name: short identifier for the run (used in filename)
-    out_dir: directory to save the histogram
-    Returns absolute path to saved file or None on failure.
+    This project no longer writes histogram PNGs under `results/experiments`.
+    Kept as a stub so older callers (if any) won't fail.
     """
-    try:
-        import matplotlib as mpl
-        mpl.use('Agg')
-        import matplotlib.pyplot as plt
-    except Exception:
-        return None
 
-    # Accept either a dict of {host: count} or a sequence of counts
-    counts = []
-    try:
-        if hosts_received is None:
-            counts = []
-        elif isinstance(hosts_received, dict):
-            counts = [int(v) for v in hosts_received.values()]
-        else:
-            # treat as sequence of numbers
-            counts = [int(v) for v in hosts_received]
-    except Exception:
-        counts = []
+    return None
 
-    if not counts:
-        # nothing to plot
-        return None
-
-    fig, ax = plt.subplots()
-    ax.hist(counts, bins='auto', color='tab:blue', edgecolor='black')
-    ax.set_xlabel('Number of messages received')
-    ax.set_ylabel('Number of hosts')
-    ax.set_title(f'Hosts received messages histogram: {run_name}')
-    fig.tight_layout()
-
-    safe_name = "".join(c if c.isalnum() or c in '._-' else '_' for c in str(run_name))
-    try:
-        os.makedirs(out_dir, exist_ok=True)
-    except Exception:
-        pass
-    out_path = os.path.join(out_dir, f"exp_{safe_name}_hosts_received_hist.png")
-    try:
-        fig.savefig(out_path)
-    finally:
-        try:
-            plt.close(fig)
-        except Exception:
-            pass
-    return os.path.abspath(out_path)

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections import deque
-from dataclasses import dataclass, field
 from typing import Deque, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -29,6 +28,7 @@ class Port:
         self.owner:NetworkNode = owner
         self.link: Link | None = None
         self.egress_queue: Deque[Packet] = deque()
+        self.peak_queue_len: int = 0
         self._drain_scheduled: bool = False
         self.is_connected: bool = False
 
@@ -45,6 +45,9 @@ class Port:
             return
 
         self.egress_queue.append(packet)
+        qlen = len(self.egress_queue)
+        if qlen > self.peak_queue_len:
+            self.peak_queue_len = qlen
         self._ensure_drain_scheduled()
 
     def queue_size(self) -> int:
@@ -82,7 +85,7 @@ class Port:
         if self.owner.message_verbose:
             now = self.owner.scheduler.get_current_time()
             logging.debug(
-                f"[t={now:.6f}s] {self.owner.name}, Port {self.port_id} transmitting packet {packet.tracking_info.global_id} via link {self.link.name}"
+                f"[sim_t={now:012.6f}s] Packet transmit    node={self.owner.name} port={self.port_id} packet_id={packet.tracking_info.global_id} link={self.link.name}"
             )
 
         self.link.transmit(packet, self)

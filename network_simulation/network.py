@@ -8,17 +8,26 @@ from network_simulation.host import Host
 from network_simulation.link import Link
 from network_simulation.switch import Switch
 from network_simulation.scenario import Scenario
+from network_simulation.network_node import RoutingMode
 from visualization.visualizer import visualize_topology
 
 
 class Network(ABC):
     def __init__(self, name: str, max_path: int,
-                 link_failure_percent: float = 0.0, verbose: bool = False, verbose_route: bool = False):
+                 link_failure_percent: float,
+                 routing_mode: RoutingMode,
+                 verbose: bool, verbose_route: bool,
+                 ecmp_flowlet_n_packets: int,
+                 mtu: int,
+                 ttl: int):
         """Base class for topology/scenario network_simulators.
 
         Parameters:
         name: name of the topology/scenario
         link_failure_percent: percentage (0-100) of links to mark as failed at creation time
+        routing_mode: forwarding selection policy for equal-cost next hops
+        mtu: maximum transmission unit in bytes
+        ttl: time to live (max hops for packets)
         """
         self.simulator = DiscreteEventSimulator()
         self.entities: Dict[str, Any] = {}
@@ -26,13 +35,18 @@ class Network(ABC):
         self.name = name
         self._links: list[Link] = []
         self.switches: List[Switch] = []
+        self.max_path = int(max_path)
         self.link_failure_percent = float(link_failure_percent)
+        self.routing_mode = routing_mode
+        self.ecmp_flowlet_n_packets = int(ecmp_flowlet_n_packets)
         self.verbose = verbose
         self.verbose_route = verbose_route
         self._scenario: Scenario | None = None
+        self.mtu = int(mtu)
+        self.ttl = int(ttl)
 
 
-    def create(self) -> None:
+    def create(self, visualize:bool) -> None:
         # Build topology
         logging.debug("Creating topology...")
         self.create_topology()
@@ -46,28 +60,34 @@ class Network(ABC):
             else:
                 logging.info("Link failure summary: 0 links marked as failed")
 
-        # Always save topology to file (never open a GUI window)
-        try:
-            visualize_topology(self.name, self.entities, show=False)
-        except Exception:
-            # do not break simulator creation if visualization fails
-            logging.exception("visualize_topology failed")
+        if visualize:
+            try:
+                visualize_topology(self.name, self.entities, show=False)
+            except Exception:
+                # do not break simulator creation if visualization fails
+                logging.exception("visualize_topology failed")
 
-        # Build scenario (traffic, flows, etc.)
-        logging.debug("Creating scenario...")
-        if self._scenario is not None:
-            self._scenario.install(self)
-        logging.debug("Scenario created.")
 
     def assign_scenario(self, scenario: Scenario) -> None:
+        logging.info("Creating scenario...")
         self._scenario = scenario
         self._scenario.install(self)
         logging.info("Scenario created.")
 
-    def create_host(self, name: str, ip_address: str, ports_count: int = 1) -> Host:
-        h = Host(name=name, scheduler=self.simulator, ip_address=ip_address,
-                 message_verbose=self.verbose, verbose_route=self.verbose_route,
-                 ports_count=ports_count)
+    def create_host(self, name: str, ip_address: str, ports_count: int) -> Host:
+        h = Host(
+            name=name,
+            scheduler=self.simulator,
+            ip_address=ip_address,
+            routing_mode=self.routing_mode,
+            ecmp_flowlet_n_packets=self.ecmp_flowlet_n_packets,
+            message_verbose=self.verbose,
+            verbose_route=self.verbose_route,
+            ports_count=ports_count,
+            max_path=None,
+            mtu=self.mtu,
+            ttl=self.ttl,
+        )
         assert name not in self.entities and name not in self.hosts
         self.entities[name] = h
         self.hosts[name] = h
@@ -75,13 +95,20 @@ class Network(ABC):
 
     def create_switch(self, name: str, ports_count: int) -> Switch:
         """Create a switch with the given number of ports."""
-        s = Switch(name, ports_count, self.simulator, message_verbose=self.verbose, verbose_route=self.verbose_route)
+        s = Switch(
+            name,
+            ports_count,
+            self.simulator,
+            routing_mode=self.routing_mode,
+            message_verbose=self.verbose,
+            verbose_route=self.verbose_route,
+        )
         assert name not in self.entities
         self.entities[name] = s
         self.switches.append(s)
         return s
 
-    def create_link(self, name: str, bandwidth: float = 1e6, delay: float = 1e-3) -> Link:
+    def create_link(self, name: str, bandwidth: float, delay: float) -> Link:
         l = Link(name, self.simulator, bandwidth, delay)
         assert name not in self.entities
         self.entities[name] = l
@@ -118,6 +145,28 @@ class Network(ABC):
         total_bandwidth_time = sum((link.bandwidth_bps / 8) * total_time * 2 for link in self.links)
         links_average_utilization_percentage = (float(total_data) / float(total_bandwidth_time))*100 if total_bandwidth_time > 0 else 0.0
 
+        # --- Queue statistics (packets) ---
+        nodes = list(self.hosts.values()) + list(self.switches)
+        global_max_port_peak_queue_len = 0
+        node_peak_queue_lens: list[int] = []
+        for n in nodes:
+            # Some code paths/tests may construct nodes without ports populated; be defensive.
+            ports = getattr(n, 'ports', None)
+            if not ports:
+                continue
+            node_peak = 0
+            for p in ports:
+                peak = int(getattr(p, 'peak_queue_len', 0))
+                if peak > global_max_port_peak_queue_len:
+                    global_max_port_peak_queue_len = peak
+                if peak > node_peak:
+                    node_peak = peak
+            node_peak_queue_lens.append(node_peak)
+        avg_node_peak_egress_queue_len = (
+            float(sum(node_peak_queue_lens)) / float(len(node_peak_queue_lens))
+            if node_peak_queue_lens else 0.0
+        )
+
         run_statistics = {
             'total packets count': packets_count,
             'total run time (simulator time in seconds)': self.simulator.end_time,
@@ -136,15 +185,28 @@ class Network(ABC):
             'link average utilization percentage': links_average_utilization_percentage,
             'link_min_bytes_transmitted': min(link.accumulated_bytes_transmitted for link in self.links),
             'link_max_bytes_transmitted': max(link.accumulated_bytes_transmitted for link in self.links),
-            'hosts received counts': [host.received_count for host in self.hosts.values()]
+            'hosts received counts': [host.received_count for host in self.hosts.values()],
+            'global_max_port_peak_queue_len (packets)': global_max_port_peak_queue_len,
+            'avg_node_peak_egress_queue_len (packets)': avg_node_peak_egress_queue_len,
         }
+
+        # Collect packet timeline data for visualization (birth_time, size_bytes)
+        packet_timeline = [
+            (p.tracking_info.birth_time, p.routing_header.size_bytes)
+            for p in self.simulator.packets
+        ]
+
         return {'topology summary': topology_summary,
                 'parameters summary': parameters_summary,
-                'run statistics': run_statistics}
+                'run statistics': run_statistics,
+                'packet_timeline': packet_timeline}
 
     def get_parameters_summary(self):
         params = {
-            'link_failure_percent': self.link_failure_percent
+            'link_failure_percent': self.link_failure_percent,
+            'routing_mode': self.routing_mode.name.lower(),
+            'ecmp_flowlet_n_packets': self.ecmp_flowlet_n_packets,
+            'max_path': self.max_path,
         }
         if self._scenario is not None:
             try:

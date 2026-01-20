@@ -3,10 +3,9 @@ import logging
 from dataclasses import dataclass
 
 from des.des import DiscreteEventSimulator
-from network_simulation.Environment import ENV
-from network_simulation.packet import FiveTuple, Protocol, PacketL3, PacketTransport, \
+from network_simulation.packet import FiveTupleExt, Protocol, PacketL3, PacketTransport, \
     PacketTrackingInfo, Packet
-from network_simulation.network_node import NetworkNode
+from network_simulation.network_node import NetworkNode, RoutingMode
 
 packet_ids = itertools.count()
 flow_ids = itertools.count(1)
@@ -24,12 +23,35 @@ class Flow:
     bytes_received: int = 0
 
 class Host(NetworkNode):
-    def __init__(self, name: str, scheduler: DiscreteEventSimulator, ip_address: str, message_verbose: bool = False, verbose_route: bool = False, max_path: int | None = None, ports_count: int = 1):
-        super().__init__(name, ports_count, scheduler, message_verbose=message_verbose, verbose_route=verbose_route)
+    def __init__(
+        self,
+        name: str,
+        scheduler: DiscreteEventSimulator,
+        ip_address: str,
+        message_verbose: bool,
+        verbose_route: bool,
+        max_path: int | None,
+        ports_count: int,
+        routing_mode: RoutingMode,
+        ecmp_flowlet_n_packets: int,
+        mtu: int,
+        ttl: int,
+    ):
+        super().__init__(
+            name,
+            ports_count,
+            scheduler,
+            routing_mode=routing_mode,
+            message_verbose=message_verbose,
+            verbose_route=verbose_route
+        )
         self._ip_address: str = ip_address
         self._received_count: int = 0
         self.max_path: int | None = max_path
         self.flows: dict[int, Flow] = {}
+        self.ecmp_flowlet_n_packets = ecmp_flowlet_n_packets
+        self.mtu = mtu
+        self.ttl = ttl
 
     @property
     def ip_address(self) -> str:
@@ -56,15 +78,21 @@ class Host(NetworkNode):
         #logging.debug(f"[t={self.scheduler.get_current_time():.6f}s] Host {self.name} sending message "
         #              f"session_id={session_id} to {dst_ip_address} size={size_bytes}B protocol={protocol.name}")
 
-        packet_count = (size_bytes + ENV.mtu - 1) // ENV.mtu
+        packet_count = (size_bytes + self.mtu - 1) // self.mtu
+        flowlet_field = self.scheduler.get_current_time()
+        flowlet_enabled = self.ecmp_flowlet_n_packets > 0
         for i in range(packet_count):
-            packet_size = ENV.mtu if i < packet_count - 1 else size_bytes - ENV.mtu * (packet_count - 1)
+            packet_size = self.mtu if i < packet_count - 1 else size_bytes - self.mtu * (packet_count - 1)
             packet_global_id: int = next(packet_ids)  # globally unique
+            if flowlet_enabled:
+                # Update flowlet field every N packets.
+                if (i + 1) % self.ecmp_flowlet_n_packets == 0:
+                    flowlet_field += 1
             header: PacketL3 = PacketL3(
-                five_tuple=FiveTuple(self.ip_address, dst_ip_address, source_port, dest_port, protocol),
+                five_tuple=FiveTupleExt(self.ip_address, dst_ip_address, source_port, dest_port, protocol, flowlet_field),
                 seq_number=i,
                 size_bytes=packet_size,
-                ttl=ENV.ttl
+                ttl=self.ttl
             )
             app_header: PacketTransport = PacketTransport(
                 flow_id=session_id,
@@ -92,10 +120,10 @@ class Host(NetworkNode):
         self._received_count += 1
 
         if self.message_verbose:
-            now = self.scheduler.get_current_time()
             logging.debug(
-                f"[t={now:.6f}s] Host {self.name} received message {packet.tracking_info.global_id} ")
+                f"[sim_t={now:012.6f}s] Packet received    host={self.name} packet_id={packet.tracking_info.global_id}")
 
     @property
     def received_count(self) -> int:
         return self._received_count
+

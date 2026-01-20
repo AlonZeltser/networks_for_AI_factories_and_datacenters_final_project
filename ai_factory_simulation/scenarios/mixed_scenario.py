@@ -1,0 +1,251 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Literal
+import hashlib
+
+from network_simulation.scenario import Scenario
+
+from ai_factory_simulation.core.runner import JobRunner
+from ai_factory_simulation.scenarios.network_flow_injector import NetworkFlowInjector
+from ai_factory_simulation.traffic.collective import CollectiveAlgorithm
+from ai_factory_simulation.workloads.mixed_scenario import (
+    MixedScenarioJobAConfig,
+    MixedScenarioJobBConfig,
+    build_mixed_scenario_job_a,
+    build_mixed_scenario_job_b,
+)
+
+
+AllocationMode = Literal["rack_balanced", "contiguous"]
+StagePlacementMode = Literal["topology_aware", "topology_unaware"]
+
+
+def _default_rack_key(host_id: str) -> int:
+    # SU host IDs look like: su1_leaf<leaf_i>_srv<srv_i>
+    # Treat leaf_i as rack id.
+    import re
+
+    m = re.search(r"leaf(\d+)", host_id)
+    if m:
+        return int(m.group(1))
+
+    # Fallback: grab any digits and group by 4.
+    digits = "".join(ch for ch in host_id if ch.isdigit())
+    if digits:
+        n = int(digits)
+        return (n - 1) // 4
+    return 0
+
+
+def _sha1_tuples(rows: list[tuple]) -> str:
+    h = hashlib.sha1()
+    for r in rows:
+        h.update(repr(r).encode("utf-8"))
+        h.update(b"\n")
+    return h.hexdigest()
+
+
+@dataclass(frozen=True)
+class MixedScenario(Scenario):
+    """Mixed scenario: two concurrent jobs (A=TP-heavy, B=PP+DP) on the AI-factory SU topology."""
+
+    name: str = "ai-factory-su-mixed_scenario"
+
+    # General
+    steps: int = 400
+    seed: int = 1234
+    traffic_scale: float = 1.0
+
+    allocation_mode: AllocationMode = "rack_balanced"
+    stage_placement_mode: StagePlacementMode = "topology_aware"
+
+    # Job A (TP-heavy)
+    jobA_fwd_compute_ms: float = 5.0
+    jobA_micro_collectives: int = 32
+    jobA_micro_collective_bytes_per_participant: int = 1_048_576  # 1 MiB
+    jobA_micro_compute_gap_ms: float = 0.5
+    jobA_final_sync_bytes_per_participant: int = 16 * 1024 * 1024
+    jobA_tail_compute_ms: float = 2.0
+    jobA_gap_us: float = 100.0  # affects ring step timing internal to collective
+
+    # Job B (PP+DP)
+    jobB_microbatch_count: int = 8
+    jobB_microbatch_gap_us: float = 75.0
+    jobB_activation_bytes_per_microbatch: int = 2 * 1024 * 1024
+    jobB_grad_bytes_per_microbatch: int = 2 * 1024 * 1024
+    jobB_dp_sync_bytes_per_participant: int = 32 * 1024 * 1024
+    jobB_tail_compute_ms: float = 3.0
+
+    # Debug / determinism
+    record_first_step_flow_signatures: bool = True
+
+    def install(self, network) -> None:
+        all_hosts = sorted(network.hosts.keys())
+        if len(all_hosts) % 2 != 0:
+            raise ValueError("mixed_scenario requires an even number of hosts")
+
+        racks: dict[int, list[str]] = {}
+        for h in all_hosts:
+            rack = _default_rack_key(h)
+            racks.setdefault(rack, []).append(h)
+        for r in racks.values():
+            r.sort()
+
+        half_total = len(all_hosts) // 2
+
+        if self.allocation_mode == "contiguous":
+            jobA_nodes = all_hosts[:half_total]
+            jobB_nodes = all_hosts[half_total:]
+        elif self.allocation_mode == "rack_balanced":
+            jobA_nodes = []
+            jobB_nodes = []
+
+            # If rack parsing doesn't match expectations, fall back to simple deterministic split.
+            rack_ids = sorted(racks.keys())
+            uniform_racks = len(rack_ids) > 0 and all(len(racks[r]) == len(racks[rack_ids[0]]) for r in rack_ids)
+            expected_half_per_rack = (len(racks[rack_ids[0]]) // 2) if rack_ids else 0
+
+            if (not uniform_racks) or expected_half_per_rack == 0:
+                jobA_nodes = all_hosts[:half_total]
+                jobB_nodes = all_hosts[half_total:]
+            else:
+                # Deterministic, rack-balanced split.
+                for rack_id in rack_ids:
+                    nodes = sorted(racks[rack_id])
+                    a_cnt = len(nodes) // 2
+                    jobA_nodes.extend(nodes[:a_cnt])
+                    jobB_nodes.extend(nodes[a_cnt:])
+
+                # Fix globally to exact half if any rack sizes are odd.
+                if len(jobA_nodes) != half_total:
+                    combined = sorted(jobA_nodes + jobB_nodes)
+                    jobA_nodes = combined[:half_total]
+                    jobB_nodes = combined[half_total:]
+        else:
+            raise ValueError("allocation_mode must be 'rack_balanced' or 'contiguous'")
+
+        if len(jobA_nodes) != half_total or len(jobB_nodes) != half_total:
+            raise AssertionError("Expected equal split between jobs")
+
+        # Stage placement for Job B into 4 stages.
+        stage_nodes: list[list[str]] = _assign_stages(
+            jobB_nodes,
+            racks=racks,
+            mode=self.stage_placement_mode,
+            seed=int(self.seed),
+        )
+
+        jobA_cfg = MixedScenarioJobAConfig(
+            steps=int(self.steps),
+            seed=int(self.seed) ^ 0xA5A5,
+            traffic_scale=float(self.traffic_scale),
+            fwd_compute_ms=float(self.jobA_fwd_compute_ms),
+            micro_collectives=int(self.jobA_micro_collectives),
+            micro_collective_bytes_per_participant=int(self.jobA_micro_collective_bytes_per_participant),
+            micro_compute_gap_ms=float(self.jobA_micro_compute_gap_ms),
+            final_sync_bytes_per_participant=int(self.jobA_final_sync_bytes_per_participant),
+            tail_compute_ms=float(self.jobA_tail_compute_ms),
+            gap_us=float(self.jobA_gap_us),
+            algorithm=CollectiveAlgorithm.RING,
+        )
+
+        jobB_cfg = MixedScenarioJobBConfig(
+            steps=int(self.steps),
+            seed=int(self.seed) ^ 0x5A5A,
+            traffic_scale=float(self.traffic_scale),
+            microbatch_count=int(self.jobB_microbatch_count),
+            microbatch_gap_us=float(self.jobB_microbatch_gap_us),
+            activation_bytes_per_microbatch=int(self.jobB_activation_bytes_per_microbatch),
+            grad_bytes_per_microbatch=int(self.jobB_grad_bytes_per_microbatch),
+            dp_sync_bytes_per_participant=int(self.jobB_dp_sync_bytes_per_participant),
+            tail_compute_ms=float(self.jobB_tail_compute_ms),
+        )
+
+        jobA = build_mixed_scenario_job_a(participants=jobA_nodes, config=jobA_cfg)
+        jobB = build_mixed_scenario_job_b(participants=jobB_nodes, stage_nodes=stage_nodes, config=jobB_cfg)
+
+        injector = NetworkFlowInjector(network)
+        runnerA = JobRunner(sim=network.simulator, injector=injector, job=jobA)
+        runnerB = JobRunner(sim=network.simulator, injector=injector, job=jobB)
+
+        metricsA = runnerA.run()
+        metricsB = runnerB.run()
+
+        # Optional determinism hook: record flow signatures for first step (before running) so repeated runs match.
+        # We hash the flow tuples for a stable fingerprint without dumping huge structures.
+        if self.record_first_step_flow_signatures:
+            sigA = _job_first_step_signature(jobA)
+            sigB = _job_first_step_signature(jobB)
+            network.entities["mixed_scenario_first_step_signature"] = {"jobA": sigA, "jobB": sigB}
+
+        network.entities["ai_factory_job_metrics"] = {"jobA": metricsA, "jobB": metricsB}
+
+    def parameters_summary(self):
+        out = super().parameters_summary()
+        out.update(
+            {
+                "steps": self.steps,
+                "seed": self.seed,
+                "traffic_scale": self.traffic_scale,
+                "allocation_mode": self.allocation_mode,
+                "stage_placement_mode": self.stage_placement_mode,
+                "jobA_micro_collectives": self.jobA_micro_collectives,
+                "jobB_microbatch_count": self.jobB_microbatch_count,
+            }
+        )
+        return out
+
+
+def _assign_stages(
+    jobB_nodes: list[str],
+    *,
+    racks: dict[int, list[str]],
+    mode: StagePlacementMode,
+    seed: int,
+) -> list[list[str]]:
+    nodes = list(jobB_nodes)
+
+    if mode == "topology_aware":
+        # Group by rack id order, then split into 4 contiguous stage groups.
+        rack_ordered: list[str] = []
+        for rack_id in sorted(racks.keys()):
+            # Only include nodes that are in jobB.
+            for h in racks[rack_id]:
+                if h in jobB_nodes:
+                    rack_ordered.append(h)
+        nodes = rack_ordered
+    elif mode == "topology_unaware":
+        # Deterministic permutation.
+        import random
+
+        rnd = random.Random(int(seed))
+        rnd.shuffle(nodes)
+    else:
+        raise ValueError("stage_placement_mode must be 'topology_aware' or 'topology_unaware'")
+
+    if len(nodes) % 4 != 0:
+        raise ValueError("Job B node count must be divisible by 4")
+
+    per_stage = len(nodes) // 4
+    stages = [nodes[i * per_stage : (i + 1) * per_stage] for i in range(4)]
+
+    # Keep each stage internally deterministic.
+    for s in stages:
+        s.sort()
+    return stages
+
+
+def _job_first_step_signature(job) -> str:
+    tuples: list[tuple] = []
+    step0 = job.steps[0]
+    for ph in step0.phases:
+        if hasattr(ph, "buckets"):
+            for b in ph.buckets:
+                for f in b.flows:
+                    tuples.append((f.src_node_id, f.dst_node_id, int(f.size_bytes), float(f.start_time), f.tag, int(f.job_id)))
+    tuples.sort()
+    return _sha1_tuples(tuples)
+
+
+__all__ = ["MixedScenario"]

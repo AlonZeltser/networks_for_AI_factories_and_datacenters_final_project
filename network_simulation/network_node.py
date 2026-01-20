@@ -20,9 +20,9 @@ class NetworkNode(ABC):
     def __init__(self, name: str,
                  ports_count: int,
                  scheduler: DiscreteEventSimulator,
-                 routing_mode: RoutingMode = RoutingMode.ECMP,
-                 message_verbose: bool = False,
-                 verbose_route: bool = False):
+                 routing_mode: RoutingMode,
+                 message_verbose: bool,
+                 verbose_route: bool):
         # --- actor basics (formerly Node) ---
         self.name = name
         self.scheduler = scheduler
@@ -113,8 +113,10 @@ class NetworkNode(ABC):
         assert 1 <= port_id <= len(self.ports)
         index = port_id - 1
         port = self.ports[index]
+        assert port.link is not None
         if getattr(port.link, 'failed'):
             return
+
 
         # Keep the old structure for introspection.
         self.ip_forward_table[ip_prefix].append(index)
@@ -153,17 +155,18 @@ class NetworkNode(ABC):
             return None
 
         if self.routing_mode == RoutingMode.ECMP:
+            # Standard ECMP: stable hash selection among equal-cost next hops.
             return best_ports[hash(packet.routing_header.five_tuple) % len(best_ports)]
 
         # ADAPTIVE: pick uniformly among the ports with the smallest current queue.
         min_len = None
         min_ports: list[int] = []
         for p in best_ports:
-            qlen = self.ports[p].queue_size()
-            if (min_len is None) or (qlen < min_len):
-                min_len = qlen
+            q_length = self.ports[p].queue_size()
+            if (min_len is None) or (q_length < min_len):
+                min_len = q_length
                 min_ports = [p]
-            elif qlen == min_len:
+            elif q_length == min_len:
                 min_ports.append(p)
 
         return random.choice(min_ports)
@@ -176,13 +179,13 @@ class NetworkNode(ABC):
             if self.message_verbose:
                 now = self.scheduler.get_current_time()
                 logging.debug(
-                    f"[t={now:.6f}s] {self.name} submitted packet {packet.tracking_info.global_id} to port {best_port_id + 1}")
+                    f"[sim_t={now:012.6f}s] Packet enqueue     node={self.name} packet_id={packet.tracking_info.global_id} port={best_port_id + 1}")
             port.enqueue(packet)
         else:
             if self.message_verbose:
                 now = self.scheduler.get_current_time()
                 logging.warning(
-                    f"[t={now:.6f}s] {self.name} has no routing entry for destination IP {packet.routing_header.five_tuple.dst_ip}, dropping message")
+                    f"[sim_t={now:012.6f}s] Packet no route    node={self.name} packet_id={packet.tracking_info.global_id} dst={packet.routing_header.five_tuple.dst_ip}")
             packet.routing_header.dropped = True
 
 

@@ -14,14 +14,15 @@ class Protocol(Enum):
 
 
 @dataclass
-class FiveTuple:
+class FiveTupleExt:
     src_ip: str
     dst_ip: str
     src_protocol_port: int
     dst_protocol_port: int
     protocol: Protocol
+    flowlet_field: int
 
-    # Cached int forms (computed once when the FiveTuple is created).
+    # Cached int forms (computed once when the FiveTupleExt is created).
     src_ip_int: int = field(init=False, repr=False)
     dst_ip_int: int = field(init=False, repr=False)
     _hash: int = field(init=False, repr=False)
@@ -34,7 +35,7 @@ class FiveTuple:
 
     def __str__(self) -> str:
         return (f"{self.src_ip}:{self.src_protocol_port} -> "
-                f"{self.dst_ip}:{self.dst_protocol_port} ({self.protocol.name})")
+                f"{self.dst_ip}:{self.dst_protocol_port} ({self.protocol.name}), ({self.flowlet_field})")
 
     def __hash__(self) -> int:
         return self._hash
@@ -43,7 +44,7 @@ class FiveTuple:
 @dataclass
 class PacketL3:
     """packet routing_header containing L3, L4 information."""
-    five_tuple: FiveTuple
+    five_tuple: FiveTupleExt
     seq_number: int
     size_bytes: int
     ttl: int # number of hops the packet can traverse. At 0, the packet is expired.

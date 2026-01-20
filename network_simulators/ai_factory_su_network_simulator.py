@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 
 from network_simulation.network import Network
+from network_simulation.network_node import RoutingMode
 
 
 class AIFactorySUNetworkSimulator(Network):
@@ -38,17 +39,32 @@ class AIFactorySUNetworkSimulator(Network):
     SERVER_PARALLEL_LINKS = 8  # 8x400G per server to leaf
     LEAF_TO_SPINE_PARALLEL_LINKS = 8  # per (leaf, spine)
 
-    BW_400G = 400e9
-
-    def __init__(self, max_path: int,
-                 link_failure_percent: float = 0.0, verbose: bool = False, verbose_route: bool = False):
+    def __init__(
+        self,
+        max_path: int,
+        link_failure_percent: float,
+        routing_mode: RoutingMode,
+        verbose: bool,
+        verbose_route: bool,
+        ecmp_flowlet_n_packets: int,
+        server_to_leaf_bandwidth_bps: float,
+        leaf_to_spine_bandwidth_bps: float,
+        mtu: int,
+        ttl: int,
+    ):
         super().__init__(
             name="ai-factory-su",
             max_path=max_path,
             link_failure_percent=link_failure_percent,
+            routing_mode=routing_mode,
             verbose=verbose,
             verbose_route=verbose_route,
+            ecmp_flowlet_n_packets=ecmp_flowlet_n_packets,
+            mtu=mtu,
+            ttl=ttl,
         )
+        self.server_to_leaf_bandwidth_bps = float(server_to_leaf_bandwidth_bps)
+        self.leaf_to_spine_bandwidth_bps = float(leaf_to_spine_bandwidth_bps)
         self._identifier = {
             "topology": "ai-factory-su",
             "leaves": self.LEAVES,
@@ -57,10 +73,13 @@ class AIFactorySUNetworkSimulator(Network):
             "server_parallel_links": self.SERVER_PARALLEL_LINKS,
             "leaf_to_spine_parallel_links": self.LEAF_TO_SPINE_PARALLEL_LINKS,
             "link failure percent": link_failure_percent,
+            "server_to_leaf_bandwidth_bps": self.server_to_leaf_bandwidth_bps,
+            "leaf_to_spine_bandwidth_bps": self.leaf_to_spine_bandwidth_bps,
         }
 
     def create_topology(self):
-        bw = self.BW_400G
+        server_bw = self.server_to_leaf_bandwidth_bps
+        fabric_bw = self.leaf_to_spine_bandwidth_bps
         delay = 1e-6  # 1us per hop propagation (toy value, but non-zero)
 
         # Switches
@@ -90,7 +109,7 @@ class AIFactorySUNetworkSimulator(Network):
                 for k in range(self.SERVER_PARALLEL_LINKS):
                     link = self.create_link(
                         f"su{self.POD_ID}_l_leaf{leaf_i}_srv{srv_i}_nic{k}",
-                        bandwidth=bw,
+                        bandwidth=server_bw,
                         delay=delay,
                     )
                     # Host port ids are 1..8
@@ -126,7 +145,7 @@ class AIFactorySUNetworkSimulator(Network):
                 for k in range(self.LEAF_TO_SPINE_PARALLEL_LINKS):
                     link = self.create_link(
                         f"su{self.POD_ID}_l_leaf{leaf_i}_spine{spine_i}_{k}",
-                        bandwidth=bw,
+                        bandwidth=fabric_bw,
                         delay=delay,
                     )
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import secrets
 
 from ai_factory_simulation.core.entities import Bucket, CommPhase, ComputePhase, Job, JobStep
 from ai_factory_simulation.core.ids import IdGenerator
@@ -9,14 +10,14 @@ from ai_factory_simulation.traffic.collective import CollectiveAlgorithm, Collec
 
 @dataclass(frozen=True)
 class Workload1Config:
-    steps: int = 2
-    t_fwd_bwd_ms: float = 120.0
-    num_buckets: int = 8
-    bucket_bytes_per_participant: int = 256 * 1024 * 1024
-    algorithm: CollectiveAlgorithm = CollectiveAlgorithm.RING
-    gap_us: float = 100.0
-    optimizer_ms: float = 5.0
-    seed: int = 123
+    steps: int
+    t_fwd_bwd_ms: float
+    num_buckets: int
+    bucket_bytes_per_participant: int
+    algorithm: CollectiveAlgorithm
+    gap_us: float
+    optimizer_ms: float
+    seed: int
 
 
 def build_workload1_dp_heavy_job(
@@ -28,7 +29,10 @@ def build_workload1_dp_heavy_job(
     """Build Workload 1 (DP-heavy) as a Job hierarchy."""
 
     ids = IdGenerator(seed=config.seed)
-    job_id = ids.next_int()
+
+    # Make job_id unique per process run even if the workload seed is fixed.
+    # Keep it deterministic-ish but collision-resistant.
+    job_id = (ids.next_int() ^ secrets.randbits(31)) & 0x7FFFFFFF
 
     steps: list[JobStep] = []
     for step_idx in range(int(config.steps)):
