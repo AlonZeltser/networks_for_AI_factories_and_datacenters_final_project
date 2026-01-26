@@ -1,0 +1,206 @@
+@startuml Network Simulation Layer - Class Diagram
+!theme plain
+skinparam linetype ortho
+skinparam classAttributeIconSize 0
+
+title Network Simulation Layer - Class Diagram
+footer Use PlantUML (freeware) or online renderer at plantuml.com
+
+package "DES - Discrete Event Simulator" #LightBlue {
+    class DiscreteEventSimulator {
+        +current_time: float
+        +event_queue: MinValuePriorityQueue
+        +packets: list[Packet]
+        +end_time: float | None
+        --
+        +schedule_event(delay: float, action: Callable)
+        +run()
+        +get_current_time(): float
+    }
+
+    class DESEvent <<dataclass>> {
+        +time: float
+        +seq: int
+        +action: Callable
+    }
+
+    class MinValuePriorityQueue {
+        -_heap: List
+        --
+        +enqueue(item)
+        +dequeue(): Any
+        +peek(): Any
+        +empty(): bool
+    }
+
+    DiscreteEventSimulator "1" *-- "1" MinValuePriorityQueue
+    DiscreteEventSimulator ..> DESEvent : creates
+}
+
+package "Network Core" #LightGreen {
+    abstract class Network {
+        +simulator: DiscreteEventSimulator
+        +entities: Dict[str, Any]
+        +hosts: Dict[str, Host]
+        +switches: List[Switch]
+        +_links: list[Link]
+        +name: str
+        +routing_mode: RoutingMode
+        +mtu: int
+        +ttl: int
+        --
+        +create(visualize: bool)
+        +assign_scenario(scenario: Scenario)
+        +create_host(...): Host
+        +create_switch(...): Switch
+        +create_link(...): Link
+        +get_results(): dict
+        {abstract} +create_topology()
+    }
+
+    abstract class NetworkNode {
+        +name: str
+        +scheduler: DiscreteEventSimulator
+        +inbox: Deque[Packet]
+        +ports: List[Port]
+        +ip_forward_table: Dict
+        +routing_mode: RoutingMode
+        --
+        +post(packet: Packet)
+        +handle_message()
+        {abstract} +on_message(packet: Packet)
+        +set_ip_routing(ip_prefix, port_id)
+        +select_port_for_packet(packet): int
+        #_internal_send_packet(packet)
+    }
+
+    class Host {
+        +_ip_address: str
+        +flows: dict[int, Flow]
+        +mtu: int
+        +ttl: int
+        --
+        +send_message(session_id, dst_ip, ...)
+        +on_message(packet)
+        +ip_address: str
+    }
+
+    class Switch {
+        --
+        +on_message(packet)
+    }
+
+    enum RoutingMode {
+        ECMP
+        ADAPTIVE
+    }
+
+    NetworkNode <|-- Host
+    NetworkNode <|-- Switch
+    Network "1" *-- "*" Host
+    Network "1" *-- "*" Switch
+    Network "1" *-- "1" DiscreteEventSimulator
+    NetworkNode --> RoutingMode
+}
+
+package "Network Infrastructure" #LightYellow {
+    class Link {
+        +name: str
+        +scheduler: DiscreteEventSimulator
+        +bandwidth_bps: float
+        +propagation_time: float
+        +next_available_time: list[float]
+        +port1: Port
+        +port2: Port
+        +failed: bool
+        --
+        +connect(port: Port)
+        +transmit(packet: Packet, sender: Port)
+    }
+
+    class Port {
+        +port_id: int
+        +owner: NetworkNode
+        +link: Link
+        +egress_queue: Deque[Packet]
+        +peak_queue_len: int
+        --
+        +connect(link: Link)
+        +enqueue(packet: Packet)
+        +queue_size(): int
+        -_drain_once()
+    }
+
+    NetworkNode "1" *-- "*" Port
+    Port "*" -- "1" Link
+    Network "1" *-- "*" Link
+}
+
+package "Packet Model" #LightPink {
+    class Packet <<dataclass>> {
+        +routing_header: PacketL3
+        +transport_header: PacketTransport
+        +tracking_info: PacketTrackingInfo
+        --
+        +is_expired(): bool
+        +delivered: bool
+        +dropped: bool
+    }
+
+    class PacketL3 <<dataclass>> {
+        +five_tuple: FiveTupleExt
+        +seq_number: int
+        +size_bytes: int
+        +ttl: int
+        +dropped: bool
+    }
+
+    class FiveTupleExt <<dataclass>> {
+        +src_ip: str
+        +dst_ip: str
+        +src_protocol_port: int
+        +dst_protocol_port: int
+        +protocol: Protocol
+        +flowlet_field: int
+    }
+
+    class PacketTransport <<dataclass>> {
+        +flow_id: int
+        +flow_count: int
+        +flow_seq: int
+    }
+
+    class PacketTrackingInfo <<dataclass>> {
+        +global_id: int
+        +birth_time: float
+        +route_length: int
+        +verbose_route: list[str]
+        +delivered: bool
+        +arrival_time: float
+    }
+
+    enum Protocol {
+        TCP
+        UDP
+        CONTROL
+    }
+
+    Packet *-- PacketL3
+    Packet *-- PacketTransport
+    Packet *-- PacketTrackingInfo
+    PacketL3 *-- FiveTupleExt
+    FiveTupleExt --> Protocol
+}
+
+package "Scenario" #LightCyan {
+    abstract class Scenario {
+        +name: str
+        --
+        {abstract} +install(network: Network)
+        +parameters_summary(): Dict
+    }
+
+    Network --> Scenario : uses
+}
+
+@enduml

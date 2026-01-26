@@ -18,6 +18,13 @@ def _mk_network(*, routing_mode: RoutingMode) -> AIFactorySUNetworkSimulator:
         leaf_to_spine_bandwidth_bps=400e9,
         mtu=4096,
         ttl=64,
+        topology_cfg={
+            "leaves": 8,
+            "spines": 4,
+            "servers_per_leaf": 4,
+            "server_parallel_links": 8,
+            "leaf_to_spine_parallel_links": 8,
+        },
     )
 
 
@@ -29,8 +36,8 @@ def test_mixed_scenario_completes_and_metrics_lengths() -> None:
         traffic_scale=0.01,
         allocation_mode="rack_balanced",
         stage_placement_mode="topology_aware",
-        jobA_micro_collectives=2,
-        jobB_microbatch_count=1,
+        tp_heavy_micro_collectives=2,
+        pp_dp_microbatch_count=1,
         record_first_step_flow_signatures=True,
     )
 
@@ -40,13 +47,13 @@ def test_mixed_scenario_completes_and_metrics_lengths() -> None:
 
     metrics = network.entities.get("ai_factory_job_metrics")
     assert isinstance(metrics, dict)
-    assert "jobA" in metrics and "jobB" in metrics
+    assert "tp_heavy" in metrics and "pp_dp" in metrics
 
-    jobA = metrics["jobA"]
-    jobB = metrics["jobB"]
+    tp_heavy = metrics["tp_heavy"]
+    pp_dp = metrics["pp_dp"]
 
-    assert len(jobA.steps) == 5
-    assert len(jobB.steps) == 5
+    assert len(tp_heavy.steps) == 5
+    assert len(pp_dp.steps) == 5
 
 
 def test_mixed_scenario_deterministic_first_step_signature() -> None:
@@ -59,8 +66,8 @@ def test_mixed_scenario_deterministic_first_step_signature() -> None:
         traffic_scale=0.01,
         allocation_mode="rack_balanced",
         stage_placement_mode="topology_unaware",
-        jobA_micro_collectives=2,
-        jobB_microbatch_count=1,
+        tp_heavy_micro_collectives=2,
+        pp_dp_microbatch_count=1,
         record_first_step_flow_signatures=True,
     )
 

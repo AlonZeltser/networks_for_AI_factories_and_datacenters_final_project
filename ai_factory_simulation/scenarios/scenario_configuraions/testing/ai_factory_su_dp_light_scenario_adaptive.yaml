@@ -2,7 +2,7 @@
 # Use this for batch runs.
 
 run:
-  debug: false
+  file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
   message_verbose: false
   verbose_route: false
   visualize: false
@@ -13,8 +13,15 @@ topology:
   mtu: 4096  # bytes, maximum transmission unit
   ttl: 64    # time to live (max hops)
 
+  ai_factory_su:
+    leaves: 8
+    spines: 4
+    servers_per_leaf: 4
+    server_parallel_links: 8
+    leaf_to_spine_parallel_links: 8
+
   routing:
-    mode: ecmp
+    mode: adaptive
     ecmp_flowlet_n_packets: 512
 
   links:
@@ -34,4 +41,3 @@ scenario:
     gap_us: 0.0000001
     t_fwd_bwd_ms: 100.0  # Forward-backward compute time in milliseconds
     optimizer_ms: 50.0   # Optimizer compute time in milliseconds
-

@@ -6,6 +6,7 @@ from ai_factory_simulation.core.runner import JobRunner
 from ai_factory_simulation.scenarios.network_flow_injector import NetworkFlowInjector
 from ai_factory_simulation.traffic.collective import CollectiveAlgorithm
 from ai_factory_simulation.workloads.workload1_dp_heavy import Workload1Config, build_workload1_dp_heavy_job
+from ai_factory_simulation.scenarios.mice_flow_injector import MiceConfig, MiceFlowInjector
 
 
 class AIFactorySUDpHeavyScenario(Scenario):
@@ -20,6 +21,8 @@ class AIFactorySUDpHeavyScenario(Scenario):
         gap_us: float,
         t_fwd_bwd_ms: float,
         optimizer_ms: float,
+        *,
+        mice: MiceConfig | None = None,
     ):
         self.steps = steps
         self.seed = seed
@@ -28,6 +31,7 @@ class AIFactorySUDpHeavyScenario(Scenario):
         self.gap_us = gap_us
         self.t_fwd_bwd_ms = t_fwd_bwd_ms
         self.optimizer_ms = optimizer_ms
+        self.mice = mice
 
     def install(self, network) -> None:
         participants = sorted(network.hosts.keys())
@@ -44,6 +48,11 @@ class AIFactorySUDpHeavyScenario(Scenario):
         job = build_workload1_dp_heavy_job(participants=participants, config=cfg)
 
         injector = NetworkFlowInjector(network)
+
+        # Optional background mice traffic.
+        if self.mice is not None and self.mice.enabled:
+            MiceFlowInjector(network=network, injector=injector, cfg=self.mice).install()
+
         runner = JobRunner(sim=network.simulator, injector=injector, job=job)
         metrics = runner.run()
 
@@ -63,5 +72,11 @@ class AIFactorySUDpHeavyScenario(Scenario):
                 "optimizer_ms": self.optimizer_ms,
             }
         )
+        if self.mice is not None and self.mice.enabled:
+            out["mice_enabled"] = True
+            out["mice_interarrival_s"] = self.mice.interarrival_s
+            out["mice_end_time_s"] = self.mice.end_time_s
+            out["mice_packets_range"] = f"{self.mice.min_packets}-{self.mice.max_packets}"
+            out["mice_force_cross_rack"] = self.mice.force_cross_rack
         return out
 

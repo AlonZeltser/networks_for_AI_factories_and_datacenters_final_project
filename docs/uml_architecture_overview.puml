@@ -1,0 +1,87 @@
+@startuml Network Simulation - Overall Architecture
+!theme plain
+skinparam componentStyle rectangle
+
+title Network Simulation - Layered Architecture Overview
+footer Use PlantUML (freeware) or online renderer at plantuml.com
+
+package "AI Factory Application Layer" #LightGreen {
+    component [**MixedScenario**\n---\nDefines workload:\n- Job A (TP-heavy)\n- Job B (PP+DP)\n- Host allocation\n- Step/phase config] as Scenario
+
+    component [**JobRunner**\n---\nState machine:\nJob → Step → Phase\n---\nCompute: DES timer\nComm: Flow injection] as Runner
+
+    component [**Workload Builders**\n---\nbuild_mixed_scenario_job_a()\nbuild_mixed_scenario_job_b()\n---\nCreate Job/Step/Phase/Bucket] as Workloads
+
+    component [**Traffic Patterns**\n---\nCollectives:\n- REDUCE_SCATTER\n- ALL_GATHER\n- ALL_REDUCE\n---\nAlgorithms:\n- Ring\n- (Tree)] as Traffic
+
+    component [**NetworkFlowInjector**\n---\nAdapter: Flow → Host\nTracks completion\nvia wrapped callbacks] as Injector
+}
+
+package "Discrete Event Simulation" #LightBlue {
+    component [**DiscreteEventSimulator**\n---\n- Priority queue (min-heap)\n- Time advancement\n- Event scheduling] as DES
+
+    component [**DESEvent**\n---\n(time, seq, action)] as Event
+
+    component [**BarrierBookkeeper**\n---\nJoin barriers:\nWait for multiple flows\nto complete] as Barrier
+}
+
+package "Network Simulation Layer" #LightYellow {
+    component [**Network**\n---\nTopology builder:\n- create_host()\n- create_switch()\n- create_link()\n- Routing tables] as Network
+
+    component [**Host**\n---\nEndpoint:\n- send_message()\n- Packetization\n- Flow tracking] as Host
+
+    component [**Switch**\n---\nForwarding:\n- ECMP hash\n- ADAPTIVE queue-aware\n- TTL enforcement] as Switch
+
+    component [**Link**\n---\nPhysical connection:\n- Bandwidth\n- Propagation delay\n- Full-duplex] as Link
+
+    component [**Port**\n---\nEgress queue:\n- FIFO ordering\n- Drain scheduling] as Port
+
+    component [**Packet**\n---\n- PacketL3 (5-tuple, TTL)\n- PacketTransport (flow_id)\n- TrackingInfo] as Packet
+}
+
+' Relationships
+Scenario --> Workloads : builds jobs
+Scenario --> Runner : creates & runs
+Workloads --> Traffic : expand collectives
+Runner --> Injector : inject flows
+Runner --> DES : schedule compute timers
+Runner --> Barrier : track flow completion
+Injector --> Host : send_message()
+Injector ..> Host : wrap on_message()
+
+Network --> Host : creates
+Network --> Switch : creates
+Network --> Link : creates
+Network --> DES : owns
+
+Host --> Port : owns
+Switch --> Port : owns
+Port --> Link : connected
+Host --> Packet : creates
+Switch --> Packet : forwards
+
+DES --> Event : manages
+Barrier ..> DES : schedule callbacks
+
+' External notes
+note right of DES
+  **Core Simulation Engine**
+  - Events ordered by (time, seq)
+  - run() processes until queue empty
+  - current_time always increases
+end note
+
+note bottom of Network
+  **Topology Types**
+  - AI Factory SU
+  - HSH
+  - Simple Star
+end note
+
+note right of Traffic
+  **Flow Generation**
+  Ring: N participants
+  → N*(N-1) flows per collective
+end note
+
+@enduml

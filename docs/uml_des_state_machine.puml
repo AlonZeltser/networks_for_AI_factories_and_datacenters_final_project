@@ -1,0 +1,47 @@
+@startuml DES Core - Event Processing
+!theme plain
+
+title DES Core - Event Processing State Machine
+footer Use PlantUML (freeware) or online renderer at plantuml.com
+
+[*] --> Idle : Initialize
+
+state Idle {
+    Idle : event_queue is empty
+    Idle : current_time = 0.0
+}
+
+state Processing {
+    state "Dequeue Event" as Dequeue
+    state "Update Time" as UpdateTime
+    state "Execute Action" as Execute
+
+    Dequeue : event = queue.dequeue()
+    Dequeue --> UpdateTime
+
+    UpdateTime : current_time = event.time
+    UpdateTime --> Execute
+
+    Execute : event.action()
+    Execute : (may schedule new events)
+    Execute --> Dequeue : queue not empty
+}
+
+Idle --> Dequeue : run() called\n& queue not empty
+Execute --> [*] : queue empty\nend_time = current_time
+
+note right of Processing
+  **Event Scheduling Inside Actions**
+
+  When action() runs, it may call:
+  schedule_event(delay, new_action)
+
+  This adds to queue at time:
+  current_time + delay
+
+  Events processed in order of:
+  1. time (ascending)
+  2. seq (tie-breaker)
+end note
+
+@enduml

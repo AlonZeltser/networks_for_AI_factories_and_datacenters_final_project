@@ -13,7 +13,7 @@ class Protocol(Enum):
     CONTROL = 3
 
 
-@dataclass
+@dataclass(slots=True)
 class FiveTupleExt:
     src_ip: str
     dst_ip: str
@@ -28,10 +28,10 @@ class FiveTupleExt:
     _hash: int = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
-        self.src_ip_int = IPAddress.parse(self.src_ip).to_int()
-        self.dst_ip_int = IPAddress.parse(self.dst_ip).to_int()
+        object.__setattr__(self, 'src_ip_int', IPAddress.parse(self.src_ip).to_int())
+        object.__setattr__(self, 'dst_ip_int', IPAddress.parse(self.dst_ip).to_int())
         # Cache hash once; __hash__ should be stable and fast.
-        self._hash = xxhash.xxh64(str(self)).intdigest()
+        object.__setattr__(self, '_hash', xxhash.xxh64(str(self)).intdigest())
 
     def __str__(self) -> str:
         return (f"{self.src_ip}:{self.src_protocol_port} -> "
@@ -71,7 +71,7 @@ class PacketTrackingInfo:
     arrival_time: Optional[float] = None
 
 
-@dataclass
+@dataclass(slots=True)
 class Packet:
     routing_header: PacketL3
     transport_header: PacketTransport

@@ -7,6 +7,8 @@ from network_simulation.packet import FiveTupleExt, Protocol, PacketL3, PacketTr
     PacketTrackingInfo, Packet
 from network_simulation.network_node import NetworkNode, RoutingMode
 
+_logger = logging.getLogger(__name__)
+
 packet_ids = itertools.count()
 flow_ids = itertools.count(1)
 
@@ -119,8 +121,8 @@ class Host(NetworkNode):
         packet.tracking_info.arrival_time = now
         self._received_count += 1
 
-        if self.message_verbose:
-            logging.debug(
+        if self.message_verbose and _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug(
                 f"[sim_t={now:012.6f}s] Packet received    host={self.name} packet_id={packet.tracking_info.global_id}")
 
     @property

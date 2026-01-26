@@ -1,0 +1,80 @@
+# Mixed scenario (ADAPTIVE) - two concurrent jobs (tp_heavy + pp_dp)
+# Run:
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenario_configuraions/testing/ai_factory_su_mixed_scenario_adaptive_light.yaml
+run:
+  file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
+  message_verbose: false
+  verbose_route: false
+  visualize: true
+topology:
+  type: ai-factory-su
+  max_path: 64
+  mtu: 40960
+  ttl: 64
+
+  ai_factory_su:
+    leaves: 8
+    spines: 4
+    servers_per_leaf: 4
+    server_parallel_links: 8
+    leaf_to_spine_parallel_links: 8
+
+  routing:
+    mode: adaptive
+    ecmp_flowlet_n_packets: 512
+  links:
+    failure_percent: 0.0
+    bandwidth_bps:
+      server_to_leaf: 400e9
+      leaf_to_spine: 400e9
+scenario:
+  name: ai-factory-su-mixed_scenario
+  params:
+    # General
+    #steps: 50
+    steps: 2
+    seed: 2026
+    traffic_scale: 0.25
+    allocation_mode: rack_balanced
+    stage_placement_mode: topology_aware
+
+    # Per-job settings
+    jobs:
+      tp_heavy:
+        steps: 2
+      pp_dp:
+        steps: 2
+
+    # tp_heavy (TP-heavy)
+    tp_heavy_fwd_compute_ms: 5.0
+    tp_heavy_micro_collectives: 16
+    #tp_heavy_micro_collective_bytes_per_participant: 1048576
+    tp_heavy_micro_collective_bytes_per_participant: 10485
+    tp_heavy_micro_compute_gap_ms: 0.5
+    #tp_heavy_final_sync_bytes_per_participant: 16777216
+    tp_heavy_final_sync_bytes_per_participant: 167772
+    tp_heavy_tail_compute_ms: 2.0
+    tp_heavy_gap_us: 100.0
+
+    # pp_dp (PP+DP)
+    pp_dp_microbatch_count: 4
+    pp_dp_microbatch_gap_us: 75.0
+    #pp_dp_activation_bytes_per_microbatch: 2097152
+    pp_dp_activation_bytes_per_microbatch: 20971
+    #pp_dp_grad_bytes_per_microbatch: 2097152
+    pp_dp_grad_bytes_per_microbatch: 20971
+    #pp_dp_dp_sync_bytes_per_participant: 33554432
+    pp_dp_dp_sync_bytes_per_participant: 335544
+    pp_dp_tail_compute_ms: 3.0
+
+    record_first_step_flow_signatures: true
+
+    mice:
+      enabled: true
+      seed: 2026
+      start_delay_s: 0.0
+      end_time_s: 10.0
+      interarrival_s: 0.001
+      min_packets: 1
+      max_packets: 4
+      force_cross_rack: true

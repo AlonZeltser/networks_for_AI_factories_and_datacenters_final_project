@@ -11,6 +11,8 @@ from network_simulation.scenario import Scenario
 from network_simulation.network_node import RoutingMode
 from visualization.visualizer import visualize_topology
 
+_logger = logging.getLogger(__name__)
+
 
 class Network(ABC):
     def __init__(self, name: str, max_path: int,
@@ -48,9 +50,11 @@ class Network(ABC):
 
     def create(self, visualize:bool) -> None:
         # Build topology
-        logging.debug("Creating topology...")
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("Creating topology...")
         self.create_topology()
-        logging.debug("topology created.")
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("topology created.")
 
         # After topology created, log a short summary of failed links (if any)
         if self.link_failure_percent and self.link_failure_percent > 0.0:
@@ -190,16 +194,58 @@ class Network(ABC):
             'avg_node_peak_egress_queue_len (packets)': avg_node_peak_egress_queue_len,
         }
 
+        # --- AI-factory app metrics (if present) ---
+        try:
+            from ai_factory_simulation.core.runner import _compute_step_stats  # type: ignore
+
+            job_metrics = self.entities.get("ai_factory_job_metrics")
+            if job_metrics is not None:
+                per_job: dict[str, dict[str, float]] = {}
+
+                # Single-job scenarios store a JobMetrics object;
+                # mixed scenarios store a dict like {"jobA": JobMetrics, "jobB": JobMetrics}.
+                if isinstance(job_metrics, dict):
+                    items = job_metrics.items()
+                else:
+                    items = [("job", job_metrics)]
+
+                for name, jm in items:
+                    steps = getattr(jm, "steps", None)
+                    if not steps:
+                        continue
+                    stats = _compute_step_stats(list(steps))
+                    per_job[name] = {
+                        "step_time_avg_ms": float(stats["avg"]) * 1000.0,
+                        "step_time_p95_ms": float(stats["p95"]) * 1000.0,
+                        "step_time_p99_ms": float(stats["p99"]) * 1000.0,
+                    }
+
+                if per_job:
+                    run_statistics["ai_factory_step_time_ms_per_job"] = per_job
+        except Exception:
+            # Never break results collection because of optional AI-factory metrics.
+            pass
+
+        # --- Mice flow metrics (if present) ---
+        try:
+            mice_summary = self.entities.get("mice_flow_summary")
+            if isinstance(mice_summary, dict) and mice_summary:
+                run_statistics.update(mice_summary)
+        except Exception:
+            pass
+
         # Collect packet timeline data for visualization (birth_time, size_bytes)
         packet_timeline = [
             (p.tracking_info.birth_time, p.routing_header.size_bytes)
             for p in self.simulator.packets
         ]
 
-        return {'topology summary': topology_summary,
-                'parameters summary': parameters_summary,
-                'run statistics': run_statistics,
-                'packet_timeline': packet_timeline}
+        return {
+            'topology summary': topology_summary,
+            'parameters summary': parameters_summary,
+            'run statistics': run_statistics,
+            'packet_timeline': packet_timeline,
+        }
 
     def get_parameters_summary(self):
         params = {

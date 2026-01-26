@@ -11,6 +11,8 @@ from network_simulation.link import Link
 from network_simulation.packet import Packet
 from network_simulation.port import Port
 
+_logger = logging.getLogger(__name__)
+
 class RoutingMode(Enum):
     ECMP = 1
     ADAPTIVE = 2
@@ -176,9 +178,9 @@ class NetworkNode(ABC):
         best_port_id = self.select_port_for_packet(packet)
         if best_port_id is not None:
             port = self.ports[best_port_id]
-            if self.message_verbose:
+            if self.message_verbose and _logger.isEnabledFor(logging.DEBUG):
                 now = self.scheduler.get_current_time()
-                logging.debug(
+                _logger.debug(
                     f"[sim_t={now:012.6f}s] Packet enqueue     node={self.name} packet_id={packet.tracking_info.global_id} port={best_port_id + 1}")
             port.enqueue(packet)
         else:

@@ -6,8 +6,10 @@ from typing import Callable
 # Use package-relative import so tests and imports from `infra` work correctly
 from des.min_value_priority_queue import MinValuePriorityQueue
 
+_logger = logging.getLogger(__name__)
 
-@dataclass(order=True)
+
+@dataclass(order=True, slots=True)
 class DESEvent:
     time: float
     seq: int
@@ -43,7 +45,8 @@ class DiscreteEventSimulator:
             event = self.event_queue.dequeue()
             self.current_time = event.time
             event.action()
-        logging.debug("DES ended after %d events", counter)
+        if _logger.isEnabledFor(logging.DEBUG):
+            _logger.debug("DES ended after %d events", counter)
         self.end_time = self.current_time
 
     def get_current_time(self) -> float:

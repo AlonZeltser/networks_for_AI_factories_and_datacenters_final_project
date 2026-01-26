@@ -9,7 +9,7 @@ from ai_factory_simulation.traffic.collective import CollectiveAlgorithm, Collec
 
 
 @dataclass(frozen=True)
-class MixedScenarioJobAConfig:
+class MixedScenarioTpHeavyConfig:
     steps: int
     seed: int
     traffic_scale: float
@@ -27,7 +27,7 @@ class MixedScenarioJobAConfig:
 
 
 @dataclass(frozen=True)
-class MixedScenarioJobBConfig:
+class MixedScenarioPpDpConfig:
     steps: int
     seed: int
     traffic_scale: float
@@ -41,7 +41,12 @@ class MixedScenarioJobBConfig:
     tail_compute_ms: float
 
 
-def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenarioJobAConfig, job_name: str = "mixed-scenario-jobA-tp") -> Job:
+def build_mixed_scenario_tp_heavy(
+    *,
+    participants: list[str],
+    config: MixedScenarioTpHeavyConfig,
+    job_name: str = "mixed-scenario-tp_heavy",
+) -> Job:
     ids = IdGenerator(seed=config.seed)
     job_id = ids.next_int()
 
@@ -52,7 +57,7 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
         phases.append(
             ComputePhase(
                 phase_id=0,
-                name="jobA_compute_front",
+                name="tp_heavy_compute_front",
                 duration_s=float(config.fwd_compute_ms) / 1000.0,
             )
         )
@@ -67,7 +72,7 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
                 bytes_per_participant=bytes_pp,
                 start_time=0.0,
                 gap_us=float(config.gap_us),
-                ids=ids.child(f"A/step{step_idx}/micro{m}/tp"),
+                ids=ids.child(f"tp_heavy/step{step_idx}/micro{m}/tp"),
                 job_id=job_id,
                 step_id=step_idx,
                 phase_id=1 + (m * 2),
@@ -76,14 +81,14 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
             phases.append(
                 CommPhase(
                     phase_id=1 + (m * 2),
-                    name=f"jobA_tp_micro_{m}",
-                    buckets=[Bucket(bucket_id=0, flows=_retag(coll.flows, job_id=job_id, tag_prefix="jobA_tp_micro"))],
+                    name=f"tp_heavy_tp_micro_{m}",
+                    buckets=[Bucket(bucket_id=0, flows=_retag(coll.flows, job_id=job_id, tag_prefix="tp_heavy_tp_micro"))],
                 )
             )
             phases.append(
                 ComputePhase(
                     phase_id=2 + (m * 2),
-                    name=f"jobA_gap_{m}",
+                    name=f"tp_heavy_gap_{m}",
                     duration_s=float(config.micro_compute_gap_ms) / 1000.0,
                 )
             )
@@ -97,7 +102,7 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
             bytes_per_participant=bytes_pp,
             start_time=0.0,
             gap_us=float(config.gap_us),
-            ids=ids.child(f"A/step{step_idx}/final/rs"),
+            ids=ids.child(f"tp_heavy/step{step_idx}/final/rs"),
             job_id=job_id,
             step_id=step_idx,
             phase_id=9991,
@@ -110,7 +115,7 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
             bytes_per_participant=bytes_pp,
             start_time=0.0,
             gap_us=float(config.gap_us),
-            ids=ids.child(f"A/step{step_idx}/final/ag"),
+            ids=ids.child(f"tp_heavy/step{step_idx}/final/ag"),
             job_id=job_id,
             step_id=step_idx,
             phase_id=9992,
@@ -119,20 +124,15 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
         phases.append(
             CommPhase(
                 phase_id=9993,
-                name="jobA_dp_sync",
-                buckets=[
-                    Bucket(
-                        bucket_id=0,
-                        flows=_retag(rs.flows + ag.flows, job_id=job_id, tag_prefix="jobA_dp_sync"),
-                    )
-                ],
+                name="tp_heavy_dp_sync",
+                buckets=[Bucket(bucket_id=0, flows=_retag(rs.flows + ag.flows, job_id=job_id, tag_prefix="tp_heavy_dp_sync"))],
             )
         )
 
         phases.append(
             ComputePhase(
                 phase_id=9994,
-                name="jobA_compute_tail",
+                name="tp_heavy_compute_tail",
                 duration_s=float(config.tail_compute_ms) / 1000.0,
             )
         )
@@ -142,19 +142,19 @@ def build_mixed_scenario_job_a(*, participants: list[str], config: MixedScenario
     return Job(job_id=job_id, name=job_name, steps=steps, participants=participants)
 
 
-def build_mixed_scenario_job_b(
+def build_mixed_scenario_pp_dp(
     *,
     participants: list[str],
     stage_nodes: list[list[str]],
-    config: MixedScenarioJobBConfig,
-    job_name: str = "mixed-scenario-jobB-ppdp",
+    config: MixedScenarioPpDpConfig,
+    job_name: str = "mixed-scenario-pp_dp",
 ) -> Job:
     ids = IdGenerator(seed=config.seed)
     job_id = ids.next_int()
 
     # stage_nodes[k] is list of nodes in stage k.
     if len(stage_nodes) != 4:
-        raise ValueError("MixedScenario JobB requires exactly 4 stages")
+        raise ValueError("MixedScenario pp_dp requires exactly 4 stages")
     if any(len(s) != len(stage_nodes[0]) for s in stage_nodes):
         raise ValueError("All stages must have equal node counts")
 
@@ -174,12 +174,12 @@ def build_mixed_scenario_job_b(
         phases.append(
             CommPhase(
                 phase_id=100,
-                name="jobB_pp_fwd",
+                name="pp_dp_pp_fwd",
                 buckets=[
                     Bucket(
                         bucket_id=0,
                         flows=_build_pp_microbatches(
-                            ids=ids.child(f"B/step{step_idx}/fwd"),
+                            ids=ids.child(f"pp_dp/step{step_idx}/fwd"),
                             job_id=job_id,
                             step_id=step_idx,
                             phase_id=100,
@@ -197,12 +197,12 @@ def build_mixed_scenario_job_b(
         phases.append(
             CommPhase(
                 phase_id=200,
-                name="jobB_pp_bwd",
+                name="pp_dp_pp_bwd",
                 buckets=[
                     Bucket(
                         bucket_id=0,
                         flows=_build_pp_microbatches(
-                            ids=ids.child(f"B/step{step_idx}/bwd"),
+                            ids=ids.child(f"pp_dp/step{step_idx}/bwd"),
                             job_id=job_id,
                             step_id=step_idx,
                             phase_id=200,
@@ -217,7 +217,7 @@ def build_mixed_scenario_job_b(
             )
         )
 
-        # DP sync across all jobB participants.
+        # DP sync across all pp_dp participants.
         dp_bytes = int(int(config.dp_sync_bytes_per_participant) * float(config.traffic_scale))
         rs = expand_collective(
             kind=CollectiveKind.REDUCE_SCATTER,
@@ -226,7 +226,7 @@ def build_mixed_scenario_job_b(
             bytes_per_participant=dp_bytes,
             start_time=0.0,
             gap_us=0.0,
-            ids=ids.child(f"B/step{step_idx}/dp/rs"),
+            ids=ids.child(f"pp_dp/step{step_idx}/dp/rs"),
             job_id=job_id,
             step_id=step_idx,
             phase_id=300,
@@ -239,7 +239,7 @@ def build_mixed_scenario_job_b(
             bytes_per_participant=dp_bytes,
             start_time=0.0,
             gap_us=0.0,
-            ids=ids.child(f"B/step{step_idx}/dp/ag"),
+            ids=ids.child(f"pp_dp/step{step_idx}/dp/ag"),
             job_id=job_id,
             step_id=step_idx,
             phase_id=301,
@@ -248,15 +248,15 @@ def build_mixed_scenario_job_b(
         phases.append(
             CommPhase(
                 phase_id=302,
-                name="jobB_dp_sync",
-                buckets=[Bucket(bucket_id=0, flows=_retag(rs.flows + ag.flows, job_id=job_id, tag_prefix="jobB_dp_sync"))],
+                name="pp_dp_dp_sync",
+                buckets=[Bucket(bucket_id=0, flows=_retag(rs.flows + ag.flows, job_id=job_id, tag_prefix="pp_dp_dp_sync"))],
             )
         )
 
         phases.append(
             ComputePhase(
                 phase_id=400,
-                name="jobB_compute_tail",
+                name="pp_dp_compute_tail",
                 duration_s=float(config.tail_compute_ms) / 1000.0,
             )
         )
@@ -289,10 +289,10 @@ def _build_pp_microbatches(
         base_t = mb * (float(microbatch_gap_us) * 1e-6)
         if direction == "fwd":
             pairs = [(0, 1), (1, 2), (2, 3)]
-            tag = "jobB_pp_fwd"
+            tag = "pp_dp_pp_fwd"
         else:
             pairs = [(3, 2), (2, 1), (1, 0)]
-            tag = "jobB_pp_bwd"
+            tag = "pp_dp_pp_bwd"
 
         # Each hop in the pipeline is a burst at slightly increasing time.
         for hop_idx, (s_stage, d_stage) in enumerate(pairs):

@@ -2,6 +2,8 @@ import logging
 
 from network_simulation.network_node import NetworkNode, RoutingMode
 
+_logger = logging.getLogger(__name__)
+
 
 class Switch(NetworkNode):
 
@@ -31,8 +33,8 @@ class Switch(NetworkNode):
                     f"[sim_t={now:012.6f}s] Packet expired     switch={self.name} packet_id={packet.tracking_info.global_id} dst={packet.routing_header.five_tuple.dst_ip}")
             packet.routing_header.dropped = True
         else:
-            if self.message_verbose:
+            if self.message_verbose and _logger.isEnabledFor(logging.DEBUG):
                 now = self.scheduler.get_current_time()
-                logging.debug(
+                _logger.debug(
                     f"[sim_t={now:012.6f}s] Packet forwarding  switch={self.name} packet_id={packet.tracking_info.global_id} dst={packet.routing_header.five_tuple.dst_ip}")
             self._internal_send_packet(packet)

@@ -19,8 +19,9 @@ from log_setup import configure_run_logging
 from ai_factory_simulation.scenarios.ai_factory_su_dp_heavy_scenario import AIFactorySUDpHeavyScenario
 from ai_factory_simulation.scenarios.mixed_scenario import MixedScenario
 from network_simulation.network_node import RoutingMode
-from network_simulators.ai_factory_su_network_simulator import AIFactorySUNetworkSimulator
+from network_simulators.ai_factory_su_network_simulator import AIFactorySUNetworkSimulator, AIFactorySUTopologyConfig
 from visualization.experiment_visualizer import visualize_experiment_results
+from ai_factory_simulation.scenarios.mice_flow_injector import MiceConfig
 
 
 def _require_dict(d: Any, path: str) -> Dict[str, Any]:
@@ -41,12 +42,16 @@ def _load_yaml(path: str) -> Dict[str, Any]:
     return _require_dict(data, "/")
 
 
-def _configure_logging(debug: bool, *, run_tag: str) -> str:
-    """Configure logging (console + per-run file) via log_setup."""
+def _configure_logging(file_debug: bool, *, run_tag: str) -> str:
+    """Configure logging (console + per-run file) via log_setup.
+
+    Console is always at INFO level.
+    File is at DEBUG level if file_debug=True, else INFO.
+    """
     return configure_run_logging(
         run_tag,
-        console_level=logging.DEBUG if debug else logging.INFO,
-        file_level=logging.DEBUG,
+        console_level=logging.INFO,
+        file_level=logging.DEBUG if file_debug else logging.INFO,
         force=True,
     )
 
@@ -87,6 +92,10 @@ def _build_network(cfg: Dict[str, Any], *, message_verbose: bool, verbose_route:
     server_to_leaf_bandwidth_bps = float(bandwidth_cfg["server_to_leaf"])
     leaf_to_spine_bandwidth_bps = float(bandwidth_cfg["leaf_to_spine"])
 
+    # Topology sizing (required)
+    su_cfg = _require_dict(_get(topo, "ai_factory_su"), "topology.ai_factory_su")
+    topology_config = AIFactorySUTopologyConfig.from_mapping(su_cfg)
+
     # Network parameters
     mtu = int(topo["mtu"])
     ttl = int(topo["ttl"])
@@ -102,6 +111,7 @@ def _build_network(cfg: Dict[str, Any], *, message_verbose: bool, verbose_route:
         leaf_to_spine_bandwidth_bps=leaf_to_spine_bandwidth_bps,
         mtu=mtu,
         ttl=ttl,
+        topology_config=topology_config,
     )
 
 
@@ -110,6 +120,25 @@ def _build_scenario(cfg: Dict[str, Any]):
     name = str(scen["name"]).lower()
 
     params = _require_dict(scen.get("params", {}), "scenario.params")
+
+    # Optional mice config (shared by scenarios)
+    topo = _require_dict(cfg.get("topology", {}), "topology")
+    mtu = int(topo.get("mtu", 4096))
+    mice_cfg = params.get("mice")
+    mice = None
+    if mice_cfg is not None:
+        mice_cfg = _require_dict(mice_cfg, "scenario.params.mice")
+        mice = MiceConfig(
+            enabled=bool(mice_cfg.get("enabled", False)),
+            seed=int(mice_cfg.get("seed", int(params.get("seed", 0)) ^ 0xC0FFEE)),
+            start_delay_s=float(mice_cfg.get("start_delay_s", 0.0)),
+            end_time_s=float(mice_cfg.get("end_time_s", float("inf"))),
+            interarrival_s=float(mice_cfg.get("interarrival_s", 0.001)),
+            min_packets=int(mice_cfg.get("min_packets", 1)),
+            max_packets=int(mice_cfg.get("max_packets", 4)),
+            mtu_bytes=int(mice_cfg.get("mtu_bytes", mtu)),
+            force_cross_rack=bool(mice_cfg.get("force_cross_rack", True)),
+        )
 
     if name == "ai-factory-su-workload1-dp-heavy":
         return AIFactorySUDpHeavyScenario(
@@ -120,30 +149,58 @@ def _build_scenario(cfg: Dict[str, Any]):
             gap_us=float(params["gap_us"]),
             t_fwd_bwd_ms=float(params["t_fwd_bwd_ms"]),
             optimizer_ms=float(params["optimizer_ms"]),
+            mice=mice,
         )
 
     if name == "ai-factory-su-mixed_scenario":
-        # Keep params explicit: no silent defaults.
+        # Backward compatible:
+        # - old: params.steps
+        # - old per-job: params.jobs.jobA.steps / params.jobs.jobB.steps
+        # - new per-job: params.jobs.tp_heavy.steps / params.jobs.pp_dp.steps
+        # - old job params: jobA_* / jobB_*
+        # - new job params: tp_heavy_* / pp_dp_*
+        jobs_cfg = params.get("jobs", {})
+        jobs_cfg = _require_dict(jobs_cfg, "scenario.params.jobs") if jobs_cfg is not None else {}
+
+        # Prefer new keys, fall back to old.
+        tp_cfg = jobs_cfg.get("tp_heavy", jobs_cfg.get("jobA", {}))
+        pp_cfg = jobs_cfg.get("pp_dp", jobs_cfg.get("jobB", {}))
+        tp_cfg = _require_dict(tp_cfg, "scenario.params.jobs.tp_heavy") if tp_cfg is not None else {}
+        pp_cfg = _require_dict(pp_cfg, "scenario.params.jobs.pp_dp") if pp_cfg is not None else {}
+
+        def _p(*keys: str):
+            for k in keys:
+                if k in params:
+                    return params[k]
+            raise KeyError(f"Missing required scenario.params key. Tried: {keys}")
+
         return MixedScenario(
             steps=int(params["steps"]),
+            tp_heavy_steps=(int(tp_cfg["steps"]) if "steps" in tp_cfg else None),
+            pp_dp_steps=(int(pp_cfg["steps"]) if "steps" in pp_cfg else None),
             seed=int(params["seed"]),
             traffic_scale=float(params["traffic_scale"]),
             allocation_mode=str(params["allocation_mode"]),
             stage_placement_mode=str(params["stage_placement_mode"]),
-            jobA_fwd_compute_ms=float(params["jobA_fwd_compute_ms"]),
-            jobA_micro_collectives=int(params["jobA_micro_collectives"]),
-            jobA_micro_collective_bytes_per_participant=int(params["jobA_micro_collective_bytes_per_participant"]),
-            jobA_micro_compute_gap_ms=float(params["jobA_micro_compute_gap_ms"]),
-            jobA_final_sync_bytes_per_participant=int(params["jobA_final_sync_bytes_per_participant"]),
-            jobA_tail_compute_ms=float(params["jobA_tail_compute_ms"]),
-            jobA_gap_us=float(params["jobA_gap_us"]),
-            jobB_microbatch_count=int(params["jobB_microbatch_count"]),
-            jobB_microbatch_gap_us=float(params["jobB_microbatch_gap_us"]),
-            jobB_activation_bytes_per_microbatch=int(params["jobB_activation_bytes_per_microbatch"]),
-            jobB_grad_bytes_per_microbatch=int(params["jobB_grad_bytes_per_microbatch"]),
-            jobB_dp_sync_bytes_per_participant=int(params["jobB_dp_sync_bytes_per_participant"]),
-            jobB_tail_compute_ms=float(params["jobB_tail_compute_ms"]),
+            tp_heavy_fwd_compute_ms=float(_p("tp_heavy_fwd_compute_ms", "jobA_fwd_compute_ms")),
+            tp_heavy_micro_collectives=int(_p("tp_heavy_micro_collectives", "jobA_micro_collectives")),
+            tp_heavy_micro_collective_bytes_per_participant=int(
+                _p("tp_heavy_micro_collective_bytes_per_participant", "jobA_micro_collective_bytes_per_participant")
+            ),
+            tp_heavy_micro_compute_gap_ms=float(_p("tp_heavy_micro_compute_gap_ms", "jobA_micro_compute_gap_ms")),
+            tp_heavy_final_sync_bytes_per_participant=int(
+                _p("tp_heavy_final_sync_bytes_per_participant", "jobA_final_sync_bytes_per_participant")
+            ),
+            tp_heavy_tail_compute_ms=float(_p("tp_heavy_tail_compute_ms", "jobA_tail_compute_ms")),
+            tp_heavy_gap_us=float(_p("tp_heavy_gap_us", "jobA_gap_us")),
+            pp_dp_microbatch_count=int(_p("pp_dp_microbatch_count", "jobB_microbatch_count")),
+            pp_dp_microbatch_gap_us=float(_p("pp_dp_microbatch_gap_us", "jobB_microbatch_gap_us")),
+            pp_dp_activation_bytes_per_microbatch=int(_p("pp_dp_activation_bytes_per_microbatch", "jobB_activation_bytes_per_microbatch")),
+            pp_dp_grad_bytes_per_microbatch=int(_p("pp_dp_grad_bytes_per_microbatch", "jobB_grad_bytes_per_microbatch")),
+            pp_dp_dp_sync_bytes_per_participant=int(_p("pp_dp_dp_sync_bytes_per_participant", "jobB_dp_sync_bytes_per_participant")),
+            pp_dp_tail_compute_ms=float(_p("pp_dp_tail_compute_ms", "jobB_tail_compute_ms")),
             record_first_step_flow_signatures=bool(params["record_first_step_flow_signatures"]),
+            mice=mice,
         )
 
     raise ValueError(
@@ -185,15 +242,16 @@ def main(argv) -> int:
     cfg = _load_yaml(yaml_path)
 
     run_cfg = _require_dict(cfg.get("run", {}), "run")
-    debug = bool(run_cfg["debug"])
+    file_debug = bool(run_cfg.get("file_debug", run_cfg.get("debug", False)))  # Backward compat with old 'debug' key
     message_verbose = bool(run_cfg["message_verbose"])
     verbose_route = bool(run_cfg["verbose_route"])
     visualize = bool(run_cfg["visualize"])
 
     topo_type = str(_require_dict(cfg.get("topology", {}), "topology")["type"])
     scen_name = str(_require_dict(cfg.get("scenario", {}), "scenario")["name"])
-    logfile_path = _configure_logging(debug=debug, run_tag=f"{topo_type}.{scen_name}")
+    logfile_path = _configure_logging(file_debug=file_debug, run_tag=f"{topo_type}.{scen_name}")
     logging.info("Logging to console and file: %s", logfile_path)
+    logging.info(f"Loaded configuration from: {yaml_path}")
 
     network = _build_network(cfg, message_verbose=message_verbose, verbose_route=verbose_route)
     scenario = _build_scenario(cfg)

@@ -4,7 +4,7 @@
 
 run:
   # Logging / debug
-  debug: false
+  file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
   message_verbose: false
   verbose_route: false
 
@@ -18,12 +18,19 @@ topology:
   mtu: 32768  # bytes, maximum transmission unit
   ttl: 64    # time to live (max hops)
 
+  ai_factory_su:
+    leaves: 8
+    spines: 4
+    servers_per_leaf: 4
+    server_parallel_links: 8
+    leaf_to_spine_parallel_links: 8
+
   routing:
     # Routing mode selection:
     # - ecmp: hash-based selection among equal-cost next hops
     # - adaptive: pick among equal-cost next hops with the smallest current egress queue
-    mode: ecmp
-    #mode: adaptive
+    #mode: ecmp
+    mode: adaptive
 
     # ECMP flowlets (ECMP mode only): rotate chosen next-hop after every N packets of the same flow.
     # 0 (or missing) disables and reverts to standard hash-ECMP.
@@ -31,7 +38,7 @@ topology:
     ecmp_flowlet_n_packets: 64
 
   links:
-    failure_percent: 2.0
+    failure_percent: 0.0
 
     # Link bandwidths in bits-per-second (bps)
     bandwidth_bps:
@@ -41,9 +48,10 @@ topology:
 scenario:
   name: ai-factory-su-workload1-dp-heavy
   params:
-    steps: 50
+    steps: 100
     seed: 1972
-    num_buckets: 2
+    num_buckets: 8
+    #bucket_bytes_per_participant: 4194304  # 4 MiB
     bucket_bytes_per_participant: 8388608  # 8 MiB
     #bucket_bytes_per_participant: 33554432  # 32 MB
     #bucket_bytes_per_participant: 268435456  # 256 MB
@@ -51,3 +59,13 @@ scenario:
     gap_us: 0.0
     t_fwd_bwd_ms: 10.0  # Forward-backward compute time in milliseconds
     optimizer_ms: 5.0   # Optimizer compute time in milliseconds
+
+    mice:
+      enabled: true
+      seed: 2026
+      start_delay_s: 0.0
+      end_time_s: 10.0
+      interarrival_s: 0.001
+      min_packets: 1
+      max_packets: 4
+      force_cross_rack: true

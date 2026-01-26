@@ -11,6 +11,8 @@ from network_simulation.packet import Packet
 if TYPE_CHECKING:
     from network_simulation.network_node import NetworkNode
 
+_logger = logging.getLogger(__name__)
+
 
 class Port:
     """A network node port with an egress queue.
@@ -23,9 +25,9 @@ class Port:
     - The Port enforces FIFO ordering per port and schedules a drain attempt at the
       earliest time the attached link is available.
     """
-    def __init__(self, id: int, owner:NetworkNode):
+    def __init__(self, id: int, owner: NetworkNode):
         self.port_id: int = id
-        self.owner:NetworkNode = owner
+        self.owner: NetworkNode = owner
         self.link: Link | None = None
         self.egress_queue: Deque[Packet] = deque()
         self.peak_queue_len: int = 0
@@ -82,9 +84,9 @@ class Port:
             return
 
         packet = self.egress_queue.popleft()
-        if self.owner.message_verbose:
+        if self.owner.message_verbose and _logger.isEnabledFor(logging.DEBUG):
             now = self.owner.scheduler.get_current_time()
-            logging.debug(
+            _logger.debug(
                 f"[sim_t={now:012.6f}s] Packet transmit    node={self.owner.name} port={self.port_id} packet_id={packet.tracking_info.global_id} link={self.link.name}"
             )
 

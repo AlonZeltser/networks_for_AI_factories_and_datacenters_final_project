@@ -4,8 +4,8 @@ Place small, safe logging initialization here so scripts can call it before impo
 other modules that may configure logging (matplotlib, third-party libs, etc.).
 
 Logging behavior:
-- Console: INFO (by default)
-- File: DEBUG (per-run logfile)
+- Console: INFO (always)
+- File: DEBUG if file_debug=True, else INFO
 
 The per-run logfile name includes the run tag (e.g., topology+scenario), but the log
 line format itself does NOT include topology/scenario.
@@ -45,8 +45,8 @@ def configure_run_logging(
 ) -> str:
     """Configure per-run logging.
 
-    - Console handler at `console_level`.
-    - File handler at `file_level`.
+    - Console handler at `console_level` (default: INFO).
+    - File handler at `file_level` (DEBUG or INFO based on file_debug).
     - Returns absolute logfile path.
 
     `run_tag` is used ONLY in the logfile filename (not in log lines).

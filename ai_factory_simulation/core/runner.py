@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, List
 
 from des.des import DiscreteEventSimulator
 
@@ -17,6 +17,49 @@ from ai_factory_simulation.core.entities import (
 )
 from ai_factory_simulation.core.schedule import BarrierBookkeeper, Join, schedule_timer
 from ai_factory_simulation.traffic.flow import Flow
+
+_logger = logging.getLogger(__name__)
+
+
+def _compute_percentile(sorted_values: List[float], percentile: float) -> float:
+    """Compute percentile from a sorted list of values.
+
+    Args:
+        sorted_values: A sorted list of numeric values.
+        percentile: Percentile to compute (0-100).
+
+    Returns:
+        The percentile value.
+    """
+    if not sorted_values:
+        return 0.0
+    n = len(sorted_values)
+    if n == 1:
+        return sorted_values[0]
+    # Use linear interpolation between closest ranks
+    rank = (percentile / 100.0) * (n - 1)
+    lower_idx = int(rank)
+    upper_idx = min(lower_idx + 1, n - 1)
+    weight = rank - lower_idx
+    return sorted_values[lower_idx] * (1 - weight) + sorted_values[upper_idx] * weight
+
+
+def _compute_step_stats(steps: List[StepMetrics]) -> dict:
+    """Compute step duration statistics: average, p95, p99.
+
+    Returns:
+        Dictionary with 'avg', 'p95', 'p99' keys (durations in seconds).
+    """
+    durations = [s.end_time - s.start_time for s in steps if s.end_time >= 0]
+    if not durations:
+        return {'avg': 0.0, 'p95': 0.0, 'p99': 0.0}
+
+    avg = sum(durations) / len(durations)
+    sorted_durations = sorted(durations)
+    p95 = _compute_percentile(sorted_durations, 95.0)
+    p99 = _compute_percentile(sorted_durations, 99.0)
+
+    return {'avg': avg, 'p95': p95, 'p99': p99}
 
 
 class FlowInjector:
@@ -64,10 +107,17 @@ class JobRunner:
         assert self.metrics is not None
         if step_index >= len(self.job.steps):
             self.metrics.end_time = self.sim.get_current_time()
-            logging.info(f"{_sim_time_prefix(self.sim)} Job finished       job_id={self.job.job_id}")
+            # Compute and log step performance statistics
+            step_stats = _compute_step_stats(self.metrics.steps)
+            logging.info(
+                f"{_sim_time_prefix(self.sim)} Job finished       job_id={self.job.job_id} "
+                f"step_time_avg={step_stats['avg']*1000:.3f}ms "
+                f"step_time_p95={step_stats['p95']*1000:.3f}ms "
+                f"step_time_p99={step_stats['p99']*1000:.3f}ms"
+            )
             return
 
-        logging.debug(f"{_sim_time_prefix(self.sim)} Step starting      step={step_index}")
+        _logger.info(f"{_sim_time_prefix(self.sim)} Step starting      step={step_index}")
         step = self.job.steps[step_index]
         step_metrics = StepMetrics(step_id=step.step_id, start_time=self.sim.get_current_time(), end_time=-1.0)
         self.metrics.steps.append(step_metrics)
@@ -80,12 +130,12 @@ class JobRunner:
 
         if phase_index >= len(step.phases):
             step_metrics.end_time = self.sim.get_current_time()
-            logging.debug(f"{_sim_time_prefix(self.sim)} Step finished      step={step_index}")
+            _logger.info(f"{_sim_time_prefix(self.sim)} Step finished      step={step_index}")
             self._run_step(step_index=step_index + 1)
             return
 
         phase = step.phases[phase_index]
-        logging.debug(f"{_sim_time_prefix(self.sim)} Phase starting     step={step_index} phase={phase_index} name={phase.name}")
+        _logger.info(f"{_sim_time_prefix(self.sim)} Phase starting     step={step_index} phase={phase_index} name={phase.name}")
         phase_metrics = PhaseMetrics(
             phase_id=phase.phase_id,
             name=phase.name,
@@ -96,7 +146,7 @@ class JobRunner:
 
         def done_phase() -> None:
             phase_metrics.end_time = self.sim.get_current_time()
-            logging.debug(f"{_sim_time_prefix(self.sim)} Phase finished     step={step_index} phase={phase_index} name={phase.name}")
+            _logger.info(f"{_sim_time_prefix(self.sim)} Phase finished     step={step_index} phase={phase_index} name={phase.name}")
             self._run_phase(step_index=step_index, phase_index=phase_index + 1)
 
         if isinstance(phase, ComputePhase):
@@ -117,17 +167,20 @@ class JobRunner:
                 done_phase()
                 return
 
-            logging.debug(f"{_sim_time_prefix(self.sim)} Bucket starting    phase={phase.name} bucket={bucket_index}")
+            if _logger.isEnabledFor(logging.DEBUG):
+                _logger.debug(f"{_sim_time_prefix(self.sim)} Bucket starting    phase={phase.name} bucket={bucket_index}")
             bucket: Bucket = phase.buckets[bucket_index]
             if not bucket.flows:
-                logging.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index} (empty)")
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index} (empty)")
                 run_bucket(bucket_index + 1)
                 return
 
             join_name = f"phase{phase.phase_id}/bucket{bucket.bucket_id}"
 
             def done_bucket() -> None:
-                logging.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index}")
+                if _logger.isEnabledFor(logging.DEBUG):
+                    _logger.debug(f"{_sim_time_prefix(self.sim)} Bucket finished    phase={phase.name} bucket={bucket_index}")
                 run_bucket(bucket_index + 1)
 
             join = Join(pending={f.flow_id for f in bucket.flows}, on_done=done_bucket)
