@@ -1,0 +1,84 @@
+@startuml Network Layer - High-Level Architecture
+!theme plain
+
+title Network Simulation Layer - High-Level Architecture
+footer Simplified view for paper/presentation
+
+' Define high-level components with packages
+package "End Hosts" {
+  component "Source Host" as SourceHost <<endpoint>>
+  component "Destination Host" as DestHost <<endpoint>>
+}
+
+package "Network Fabric" {
+  component "Switches" as Switches <<forwarding>>
+  component "Links" as Links <<physical>>
+}
+
+package "Routing Logic" {
+  component "Port Selector" as Routing <<policy>>
+}
+
+package "Queue Management" {
+  component "Egress Queues" as Queues <<buffer>>
+}
+
+package "Simulation Engine" {
+  component "Event Scheduler" as Scheduler <<infrastructure>>
+}
+
+' Main datapath flow - cleaner layout
+SourceHost -down-> Routing : "Messages\n(flows)"
+Routing -down-> Queues : "Packets\n(routed)"
+Queues -down-> Links : "Transmit\n(serialized)"
+Links -right-> Switches : "Forward\n(hop-by-hop)"
+Switches -down-> Queues : "Next hop\nselection"
+Switches -right-> DestHost : "Deliver"
+
+' Scheduling relationships
+Scheduler .up.> SourceHost : "Drive\ntransmissions"
+Scheduler .up.> Queues : "Drain\nevents"
+Scheduler .up.> Links : "Arrival\nevents"
+Scheduler .up.> Switches : "Process\nevents"
+
+' Feedback paths
+DestHost .up.> SourceHost : "Flow completion\nnotifications"
+Queues .left.> Routing : "Queue state\n(adaptive)"
+
+' Key concepts
+note top of Routing
+  **Routing Algorithms**
+  • ECMP: Hash-based load balancing
+  • Adaptive: Queue-aware routing
+  • Flowlet: Time-based switching
+end note
+
+note right of Queues
+  **FIFO Egress Queues**
+  • Per-port buffering
+  • Back-pressure via scheduling
+  • Peak tracking for analysis
+end note
+
+note bottom of Links
+  **Full-Duplex Links**
+  • Serialization delay (bandwidth)
+  • Propagation delay (distance)
+  • Independent directions
+end note
+
+note left of Scheduler
+  **Discrete-Event Simulation**
+  • Time-ordered event queue
+  • Non-blocking execution
+  • Self-scheduling loops
+end note
+
+note top of Switches
+  **Packet Forwarding**
+  • TTL-based loop prevention
+  • Zero processing delay
+  • Per-packet routing decisions
+end note
+
+@enduml

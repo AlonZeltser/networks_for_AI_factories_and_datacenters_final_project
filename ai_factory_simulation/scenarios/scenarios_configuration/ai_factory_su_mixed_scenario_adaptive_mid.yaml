@@ -40,7 +40,7 @@ scenario:
     # Per-job settings
     jobs:
       tp_heavy:
-        steps: 50
+        steps: 100
       pp_dp:
         steps: 200
 
