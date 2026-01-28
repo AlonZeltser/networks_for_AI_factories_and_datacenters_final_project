@@ -44,6 +44,7 @@ class Port:
         if getattr(self.link, "failed", False):
             # Should normally be filtered by routing logic. But be defensive.
             packet.routing_header.dropped = True
+            self.owner.scheduler.packet_stats.record_dropped()
             return
 
         self.egress_queue.append(packet)
@@ -70,7 +71,9 @@ class Port:
         if getattr(self.link, "failed", False):
             # Drop everything queued if link fails.
             while self.egress_queue:
-                self.egress_queue.popleft().dropped = True
+                pkt = self.egress_queue.popleft()
+                pkt.dropped = True
+                self.owner.scheduler.packet_stats.record_dropped()
             return
 
         now = self.owner.scheduler.get_current_time()

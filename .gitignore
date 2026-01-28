@@ -1,6 +1,6 @@
 .idea/
 results/
-
+batch_logs/
 
 __pycache__/
 *.py[cod]

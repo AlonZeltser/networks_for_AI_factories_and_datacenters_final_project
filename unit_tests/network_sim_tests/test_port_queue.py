@@ -80,7 +80,9 @@ class TestPortQueue(unittest.TestCase):
         sim.run()
 
         self.assertEqual(h2.received_count, 2)
-        self.assertTrue(all(m.delivered for m in sim.messages))
+        # Check via streaming stats (packets not stored by default)
+        self.assertEqual(sim.packet_stats.total_count, 2)
+        self.assertEqual(sim.packet_stats.delivered_count, 2)
         self.assertAlmostEqual(sim.end_time, 0.016, places=6)
 
 

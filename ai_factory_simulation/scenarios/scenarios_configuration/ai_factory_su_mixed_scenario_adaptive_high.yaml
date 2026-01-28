@@ -1,6 +1,6 @@
 # Mixed scenario (ADAPTIVE) - two concurrent jobs (tp_heavy + pp_dp)
 # Run:
-#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenario_configuraions/link_failures/ai_factory_su_mixed_scenario_adaptive.yaml
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenarios_configuration/no_link_failures/ai_factory_su_mixed_scenario_adaptive_mid.yaml
 run:
   file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
   message_verbose: false
@@ -23,7 +23,7 @@ topology:
     mode: adaptive
     ecmp_flowlet_n_packets: 512
   links:
-    failure_percent: 5.0
+    failure_percent: 0.0
     bandwidth_bps:
       server_to_leaf: 4e9
       leaf_to_spine: 4e9
@@ -47,18 +47,18 @@ scenario:
     # tp_heavy (TP-heavy)
     tp_heavy_fwd_compute_ms: 5.0
     tp_heavy_micro_collectives: 16
-    tp_heavy_micro_collective_bytes_per_participant: 1048576
+    tp_heavy_micro_collective_bytes_per_participant: 2097152  # 2 MiB
     tp_heavy_micro_compute_gap_ms: 0.5
-    tp_heavy_final_sync_bytes_per_participant: 16777216
+    tp_heavy_final_sync_bytes_per_participant: 33554432       # 32 MiB
     tp_heavy_tail_compute_ms: 2.0
     tp_heavy_gap_us: 100.0
 
     # pp_dp (PP+DP)
     pp_dp_microbatch_count: 4
     pp_dp_microbatch_gap_us: 75.0
-    pp_dp_activation_bytes_per_microbatch: 2097152
-    pp_dp_grad_bytes_per_microbatch: 2097152
-    pp_dp_dp_sync_bytes_per_participant: 33554432
+    pp_dp_activation_bytes_per_microbatch: 4194304 # 4 MiB
+    pp_dp_grad_bytes_per_microbatch: 4194304 # 4 MiB
+    pp_dp_dp_sync_bytes_per_participant: 67108864 # 64 MiB
     pp_dp_tail_compute_ms: 3.0
     record_first_step_flow_signatures: true
 

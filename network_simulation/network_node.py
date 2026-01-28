@@ -189,6 +189,7 @@ class NetworkNode(ABC):
                 logging.warning(
                     f"[sim_t={now:012.6f}s] Packet no route    node={self.name} packet_id={packet.tracking_info.global_id} dst={packet.routing_header.five_tuple.dst_ip}")
             packet.routing_header.dropped = True
+            self.scheduler.packet_stats.record_dropped()
 
 
     @property

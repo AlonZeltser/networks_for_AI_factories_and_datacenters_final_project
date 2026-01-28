@@ -1,6 +1,6 @@
 # Example YAML config for the AI Factory Simulation runner.
 # Run:
-#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/ai_factory_su_dp_heavy_scenario_ecmp.yaml
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/ai_factory_su_dp_heavy_scenario_ecmp_high.yaml
 
 run:
   # Logging / debug
@@ -29,8 +29,8 @@ topology:
     # Routing mode selection:
     # - ecmp: hash-based selection among equal-cost next hops
     # - adaptive: pick among equal-cost next hops with the smallest current egress queue
-    #mode: ecmp
-    mode: adaptive
+    mode: ecmp
+    #mode: adaptive
 
     # ECMP flowlets (ECMP mode only): rotate chosen next-hop after every N packets of the same flow.
     # 0 (or missing) disables and reverts to standard hash-ECMP.
@@ -48,12 +48,12 @@ topology:
 scenario:
   name: ai-factory-su-workload1-dp-heavy
   params:
-    steps: 100
+    steps: 50
     seed: 1972
     num_buckets: 8
     #bucket_bytes_per_participant: 4194304  # 4 MiB
-    bucket_bytes_per_participant: 8388608  # 8 MiB
-    #bucket_bytes_per_participant: 33554432  # 32 MB
+    #bucket_bytes_per_participant: 8388608  # 8 MiB
+    bucket_bytes_per_participant: 33554432  # 32 MB
     #bucket_bytes_per_participant: 268435456  # 256 MB
     #gap_us: 0.0000001
     gap_us: 0.0

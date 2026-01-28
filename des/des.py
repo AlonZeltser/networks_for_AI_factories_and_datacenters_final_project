@@ -5,6 +5,7 @@ from typing import Callable
 
 # Use package-relative import so tests and imports from `infra` work correctly
 from des.min_value_priority_queue import MinValuePriorityQueue
+from des.packet_statistics import PacketStatistics
 
 _logger = logging.getLogger(__name__)
 
@@ -18,11 +19,14 @@ class DESEvent:
 
 class DiscreteEventSimulator:
 
-    def __init__(self):
+    def __init__(self, store_packets: bool = False):
         self.current_time = 0.0
         self.event_queue: MinValuePriorityQueue = MinValuePriorityQueue()
         self.scheduling_counter = itertools.count()
-        self.packets = []
+        self.packet_stats = PacketStatistics()
+        # Optional: store packets for debugging (disabled by default to save memory)
+        self._store_packets = store_packets
+        self.packets = [] if store_packets else None
         self.end_time: float | None = None
 
     @property

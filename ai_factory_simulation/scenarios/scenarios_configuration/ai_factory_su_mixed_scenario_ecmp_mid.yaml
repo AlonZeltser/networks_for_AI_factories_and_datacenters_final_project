@@ -1,6 +1,6 @@
 # Mixed scenario (ECMP) - two concurrent jobs (tp_heavy + pp_dp)
 # Run:
-#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenario_configuraions/no_link_failures/ai_factory_su_mixed_scenario_ecmp.yaml
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenarios_configuration/no_link_failures/ai_factory_su_mixed_scenario_ecmp_mid.yaml
 
 run:
   file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
@@ -23,7 +23,7 @@ topology:
 
   routing:
     mode: ecmp
-    ecmp_flowlet_n_packets: 512
+    ecmp_flowlet_n_packets: 0
 
   links:
     failure_percent: 0.0

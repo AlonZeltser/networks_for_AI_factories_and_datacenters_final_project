@@ -32,6 +32,7 @@ class Switch(NetworkNode):
                 logging.warning(
                     f"[sim_t={now:012.6f}s] Packet expired     switch={self.name} packet_id={packet.tracking_info.global_id} dst={packet.routing_header.five_tuple.dst_ip}")
             packet.routing_header.dropped = True
+            self.scheduler.packet_stats.record_dropped()
         else:
             if self.message_verbose and _logger.isEnabledFor(logging.DEBUG):
                 now = self.scheduler.get_current_time()

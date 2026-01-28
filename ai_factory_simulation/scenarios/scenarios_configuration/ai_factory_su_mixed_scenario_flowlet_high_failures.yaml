@@ -1,0 +1,79 @@
+# Mixed scenario (ECMP) - two concurrent jobs (tp_heavy + pp_dp)
+# Run:
+#   python ai_factory_network_simulation.py ai_factory_simulation/scenarios/scenarios_configuration/no_link_failures/ai_factory_su_mixed_scenario_ecmp_mid.yaml
+
+run:
+  file_debug: false   # true: file log at DEBUG level, false: file log at INFO level (console always INFO)
+  message_verbose: false
+  verbose_route: false
+  visualize: false
+
+topology:
+  type: ai-factory-su
+  max_path: 64
+  mtu: 4096
+  ttl: 64
+
+  ai_factory_su:
+    leaves: 8
+    spines: 4
+    servers_per_leaf: 4
+    server_parallel_links: 8
+    leaf_to_spine_parallel_links: 8
+
+  routing:
+    mode: ecmp
+    ecmp_flowlet_n_packets: 64
+
+  links:
+    failure_percent: 5.0
+    bandwidth_bps:
+      server_to_leaf: 4e9
+      leaf_to_spine: 4e9
+
+scenario:
+  name: ai-factory-su-mixed_scenario
+  params:
+    # General
+    steps: 50
+    seed: 2026
+    traffic_scale: 0.25
+
+    allocation_mode: rack_balanced   # rack_balanced | contiguous
+    stage_placement_mode: topology_aware  # topology_aware | topology_unaware
+
+    # Per-job settings
+    jobs:
+      tp_heavy:
+        steps: 50
+      pp_dp:
+        steps: 200
+
+    # tp_heavy (TP-heavy)
+    tp_heavy_fwd_compute_ms: 5.0
+    tp_heavy_micro_collectives: 16
+    tp_heavy_micro_collective_bytes_per_participant: 1048576   # 1 MiB
+    tp_heavy_micro_compute_gap_ms: 0.5
+    tp_heavy_final_sync_bytes_per_participant: 16777216        # 16 MiB
+    tp_heavy_tail_compute_ms: 2.0
+    tp_heavy_gap_us: 100.0
+
+    # pp_dp (PP+DP)
+    pp_dp_microbatch_count: 4
+    pp_dp_microbatch_gap_us: 75.0
+    pp_dp_activation_bytes_per_microbatch: 2097152          # 2 MiB
+    pp_dp_grad_bytes_per_microbatch: 2097152                # 2 MiB
+    pp_dp_dp_sync_bytes_per_participant: 33554432           # 32 MiB
+    pp_dp_tail_compute_ms: 3.0
+
+    record_first_step_flow_signatures: true
+
+    mice:
+      enabled: true
+      seed: 2026
+      start_delay_s: 0.0
+      end_time_s: 10.0
+      interarrival_s: 0.001
+      min_packets: 1
+      max_packets: 4
+      force_cross_rack: true

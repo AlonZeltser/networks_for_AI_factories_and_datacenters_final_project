@@ -111,7 +111,11 @@ class Host(NetworkNode):
             packet = Packet(routing_header=header,
                             transport_header=app_header,
                             tracking_info=tracking_info)
-            self.scheduler.packets.append(packet)
+            # Record packet creation in streaming stats
+            self.scheduler.packet_stats.record_created()
+            # Optionally store packet for debugging (when enabled)
+            if self.scheduler._store_packets and self.scheduler.packets is not None:
+                self.scheduler.packets.append(packet)
             self._internal_send_packet(packet)
 
 
@@ -120,6 +124,8 @@ class Host(NetworkNode):
         packet.tracking_info.delivered = True
         packet.tracking_info.arrival_time = now
         self._received_count += 1
+        # Record delivery in streaming stats
+        self.scheduler.packet_stats.record_delivered(packet.tracking_info.route_length)
 
         if self.message_verbose and _logger.isEnabledFor(logging.DEBUG):
             _logger.debug(
