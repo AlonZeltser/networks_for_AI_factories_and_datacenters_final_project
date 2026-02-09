@@ -1,0 +1,19 @@
+﻿
+scenario                                                                                                         exitCo
+                                                                                                                     de
+--------                                                                                                         ------
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_adaptive_high.yaml               0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_adaptive_high_failures.yaml      0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_adaptive_low.yaml                0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_adaptive_mid.yaml                0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_ecmp_high.yaml                   0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_ecmp_high_failures.yaml          0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_ecmp_low.yaml                    0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_ecmp_mid.yaml                    0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_flowlet_high.yaml                0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_flowlet_high_failures.yaml       0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_flowlet_low.yaml                 0
+ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_mixed_scenario_flowlet_mid.yaml                 0
+
+
+
