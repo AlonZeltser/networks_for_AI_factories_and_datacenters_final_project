@@ -1,0 +1,461 @@
+10:04:57 [INFO   ] ai_factory_network_simulation.py:253 Logging to console and file: C:\Users\alonz\repos\studies\networks\network_sim\results\logs\ai-factory-su.ai-factory-su-workload1-dp-heavy_20260128_100457_261758_f92a.log
+10:04:57 [INFO   ] ai_factory_network_simulation.py:254 Loaded configuration from: C:\Users\alonz\repos\studies\networks\network_sim\ai_factory_simulation\scenarios\scenarios_configuration\ai_factory_su_dp_heavy_scenario_ecmp_high.yaml
+10:04:57 [INFO   ] ai_factory_su_network_simulator.py:246 AI-Factory SU topology created: leaves=8, spines=4, servers=32, links=512
+10:04:57 [INFO   ] network.py:76 Creating scenario...
+10:04:59 [INFO   ] network.py:79 Scenario created.
+10:04:59 [INFO   ] ai_factory_network_simulation.py:262 Starting AI factory simulation
+10:04:59 [INFO   ] runner.py:101 [sim_t=00000.000000s] Job starting       job=workload1-dp-heavy id=1531469390 participants=32 steps=50
+10:04:59 [INFO   ] runner.py:120 [sim_t=00000.000000s] Step starting      step=0
+10:04:59 [INFO   ] runner.py:138 [sim_t=00000.000000s] Phase starting     step=0 phase=0 name=fwd_bwd_compute
+10:04:59 [INFO   ] runner.py:149 [sim_t=00000.010000s] Phase finished     step=0 phase=0 name=fwd_bwd_compute
+10:04:59 [INFO   ] runner.py:138 [sim_t=00000.010000s] Phase starting     step=0 phase=1 name=gradient_sync
+10:05:20 [INFO   ] runner.py:149 [sim_t=00001.329730s] Phase finished     step=0 phase=1 name=gradient_sync
+10:05:20 [INFO   ] runner.py:138 [sim_t=00001.329730s] Phase starting     step=0 phase=2 name=optimizer_compute
+10:05:20 [INFO   ] runner.py:149 [sim_t=00001.334730s] Phase finished     step=0 phase=2 name=optimizer_compute
+10:05:20 [INFO   ] runner.py:133 [sim_t=00001.334730s] Step finished      step=0
+10:05:20 [INFO   ] runner.py:120 [sim_t=00001.334730s] Step starting      step=1
+10:05:20 [INFO   ] runner.py:138 [sim_t=00001.334730s] Phase starting     step=1 phase=0 name=fwd_bwd_compute
+10:05:20 [INFO   ] runner.py:149 [sim_t=00001.344730s] Phase finished     step=1 phase=0 name=fwd_bwd_compute
+10:05:20 [INFO   ] runner.py:138 [sim_t=00001.344730s] Phase starting     step=1 phase=1 name=gradient_sync
+10:05:41 [INFO   ] runner.py:149 [sim_t=00002.713154s] Phase finished     step=1 phase=1 name=gradient_sync
+10:05:41 [INFO   ] runner.py:138 [sim_t=00002.713154s] Phase starting     step=1 phase=2 name=optimizer_compute
+10:05:41 [INFO   ] runner.py:149 [sim_t=00002.718154s] Phase finished     step=1 phase=2 name=optimizer_compute
+10:05:41 [INFO   ] runner.py:133 [sim_t=00002.718154s] Step finished      step=1
+10:05:41 [INFO   ] runner.py:120 [sim_t=00002.718154s] Step starting      step=2
+10:05:41 [INFO   ] runner.py:138 [sim_t=00002.718154s] Phase starting     step=2 phase=0 name=fwd_bwd_compute
+10:05:41 [INFO   ] runner.py:149 [sim_t=00002.728154s] Phase finished     step=2 phase=0 name=fwd_bwd_compute
+10:05:41 [INFO   ] runner.py:138 [sim_t=00002.728154s] Phase starting     step=2 phase=1 name=gradient_sync
+10:06:02 [INFO   ] runner.py:149 [sim_t=00004.096185s] Phase finished     step=2 phase=1 name=gradient_sync
+10:06:02 [INFO   ] runner.py:138 [sim_t=00004.096185s] Phase starting     step=2 phase=2 name=optimizer_compute
+10:06:02 [INFO   ] runner.py:149 [sim_t=00004.101185s] Phase finished     step=2 phase=2 name=optimizer_compute
+10:06:02 [INFO   ] runner.py:133 [sim_t=00004.101185s] Step finished      step=2
+10:06:02 [INFO   ] runner.py:120 [sim_t=00004.101185s] Step starting      step=3
+10:06:02 [INFO   ] runner.py:138 [sim_t=00004.101185s] Phase starting     step=3 phase=0 name=fwd_bwd_compute
+10:06:02 [INFO   ] runner.py:149 [sim_t=00004.111185s] Phase finished     step=3 phase=0 name=fwd_bwd_compute
+10:06:02 [INFO   ] runner.py:138 [sim_t=00004.111185s] Phase starting     step=3 phase=1 name=gradient_sync
+10:06:23 [INFO   ] runner.py:149 [sim_t=00005.479608s] Phase finished     step=3 phase=1 name=gradient_sync
+10:06:23 [INFO   ] runner.py:138 [sim_t=00005.479608s] Phase starting     step=3 phase=2 name=optimizer_compute
+10:06:23 [INFO   ] runner.py:149 [sim_t=00005.484608s] Phase finished     step=3 phase=2 name=optimizer_compute
+10:06:23 [INFO   ] runner.py:133 [sim_t=00005.484608s] Step finished      step=3
+10:06:23 [INFO   ] runner.py:120 [sim_t=00005.484608s] Step starting      step=4
+10:06:23 [INFO   ] runner.py:138 [sim_t=00005.484608s] Phase starting     step=4 phase=0 name=fwd_bwd_compute
+10:06:23 [INFO   ] runner.py:149 [sim_t=00005.494608s] Phase finished     step=4 phase=0 name=fwd_bwd_compute
+10:06:23 [INFO   ] runner.py:138 [sim_t=00005.494608s] Phase starting     step=4 phase=1 name=gradient_sync
+10:06:44 [INFO   ] runner.py:149 [sim_t=00006.798282s] Phase finished     step=4 phase=1 name=gradient_sync
+10:06:44 [INFO   ] runner.py:138 [sim_t=00006.798282s] Phase starting     step=4 phase=2 name=optimizer_compute
+10:06:44 [INFO   ] runner.py:149 [sim_t=00006.803282s] Phase finished     step=4 phase=2 name=optimizer_compute
+10:06:44 [INFO   ] runner.py:133 [sim_t=00006.803282s] Step finished      step=4
+10:06:44 [INFO   ] runner.py:120 [sim_t=00006.803282s] Step starting      step=5
+10:06:44 [INFO   ] runner.py:138 [sim_t=00006.803282s] Phase starting     step=5 phase=0 name=fwd_bwd_compute
+10:06:44 [INFO   ] runner.py:149 [sim_t=00006.813282s] Phase finished     step=5 phase=0 name=fwd_bwd_compute
+10:06:44 [INFO   ] runner.py:138 [sim_t=00006.813282s] Phase starting     step=5 phase=1 name=gradient_sync
+10:07:05 [INFO   ] runner.py:149 [sim_t=00008.246390s] Phase finished     step=5 phase=1 name=gradient_sync
+10:07:05 [INFO   ] runner.py:138 [sim_t=00008.246390s] Phase starting     step=5 phase=2 name=optimizer_compute
+10:07:05 [INFO   ] runner.py:149 [sim_t=00008.251390s] Phase finished     step=5 phase=2 name=optimizer_compute
+10:07:05 [INFO   ] runner.py:133 [sim_t=00008.251390s] Step finished      step=5
+10:07:05 [INFO   ] runner.py:120 [sim_t=00008.251390s] Step starting      step=6
+10:07:05 [INFO   ] runner.py:138 [sim_t=00008.251390s] Phase starting     step=6 phase=0 name=fwd_bwd_compute
+10:07:05 [INFO   ] runner.py:149 [sim_t=00008.261390s] Phase finished     step=6 phase=0 name=fwd_bwd_compute
+10:07:05 [INFO   ] runner.py:138 [sim_t=00008.261390s] Phase starting     step=6 phase=1 name=gradient_sync
+10:07:26 [INFO   ] runner.py:149 [sim_t=00009.629879s] Phase finished     step=6 phase=1 name=gradient_sync
+10:07:26 [INFO   ] runner.py:138 [sim_t=00009.629879s] Phase starting     step=6 phase=2 name=optimizer_compute
+10:07:26 [INFO   ] runner.py:149 [sim_t=00009.634879s] Phase finished     step=6 phase=2 name=optimizer_compute
+10:07:26 [INFO   ] runner.py:133 [sim_t=00009.634879s] Step finished      step=6
+10:07:26 [INFO   ] runner.py:120 [sim_t=00009.634879s] Step starting      step=7
+10:07:26 [INFO   ] runner.py:138 [sim_t=00009.634879s] Phase starting     step=7 phase=0 name=fwd_bwd_compute
+10:07:26 [INFO   ] runner.py:149 [sim_t=00009.644879s] Phase finished     step=7 phase=0 name=fwd_bwd_compute
+10:07:26 [INFO   ] runner.py:138 [sim_t=00009.644879s] Phase starting     step=7 phase=1 name=gradient_sync
+10:07:31 [INFO   ] mice_flow_injector.py:145 Mice flows summary: flows=10001 avg=5.108ms p95=42.710ms p99=79.913ms
+10:07:46 [INFO   ] runner.py:149 [sim_t=00010.849201s] Phase finished     step=7 phase=1 name=gradient_sync
+10:07:46 [INFO   ] runner.py:138 [sim_t=00010.849201s] Phase starting     step=7 phase=2 name=optimizer_compute
+10:07:46 [INFO   ] runner.py:149 [sim_t=00010.854201s] Phase finished     step=7 phase=2 name=optimizer_compute
+10:07:46 [INFO   ] runner.py:133 [sim_t=00010.854201s] Step finished      step=7
+10:07:46 [INFO   ] runner.py:120 [sim_t=00010.854201s] Step starting      step=8
+10:07:46 [INFO   ] runner.py:138 [sim_t=00010.854201s] Phase starting     step=8 phase=0 name=fwd_bwd_compute
+10:07:46 [INFO   ] runner.py:149 [sim_t=00010.864201s] Phase finished     step=8 phase=0 name=fwd_bwd_compute
+10:07:46 [INFO   ] runner.py:138 [sim_t=00010.864201s] Phase starting     step=8 phase=1 name=gradient_sync
+10:08:07 [INFO   ] runner.py:149 [sim_t=00012.328569s] Phase finished     step=8 phase=1 name=gradient_sync
+10:08:07 [INFO   ] runner.py:138 [sim_t=00012.328569s] Phase starting     step=8 phase=2 name=optimizer_compute
+10:08:07 [INFO   ] runner.py:149 [sim_t=00012.333569s] Phase finished     step=8 phase=2 name=optimizer_compute
+10:08:07 [INFO   ] runner.py:133 [sim_t=00012.333569s] Step finished      step=8
+10:08:07 [INFO   ] runner.py:120 [sim_t=00012.333569s] Step starting      step=9
+10:08:07 [INFO   ] runner.py:138 [sim_t=00012.333569s] Phase starting     step=9 phase=0 name=fwd_bwd_compute
+10:08:07 [INFO   ] runner.py:149 [sim_t=00012.343569s] Phase finished     step=9 phase=0 name=fwd_bwd_compute
+10:08:07 [INFO   ] runner.py:138 [sim_t=00012.343569s] Phase starting     step=9 phase=1 name=gradient_sync
+10:08:28 [INFO   ] runner.py:149 [sim_t=00013.710486s] Phase finished     step=9 phase=1 name=gradient_sync
+10:08:28 [INFO   ] runner.py:138 [sim_t=00013.710486s] Phase starting     step=9 phase=2 name=optimizer_compute
+10:08:28 [INFO   ] runner.py:149 [sim_t=00013.715486s] Phase finished     step=9 phase=2 name=optimizer_compute
+10:08:28 [INFO   ] runner.py:133 [sim_t=00013.715486s] Step finished      step=9
+10:08:28 [INFO   ] runner.py:120 [sim_t=00013.715486s] Step starting      step=10
+10:08:28 [INFO   ] runner.py:138 [sim_t=00013.715486s] Phase starting     step=10 phase=0 name=fwd_bwd_compute
+10:08:28 [INFO   ] runner.py:149 [sim_t=00013.725486s] Phase finished     step=10 phase=0 name=fwd_bwd_compute
+10:08:28 [INFO   ] runner.py:138 [sim_t=00013.725486s] Phase starting     step=10 phase=1 name=gradient_sync
+10:08:49 [INFO   ] runner.py:149 [sim_t=00015.254864s] Phase finished     step=10 phase=1 name=gradient_sync
+10:08:49 [INFO   ] runner.py:138 [sim_t=00015.254864s] Phase starting     step=10 phase=2 name=optimizer_compute
+10:08:49 [INFO   ] runner.py:149 [sim_t=00015.259864s] Phase finished     step=10 phase=2 name=optimizer_compute
+10:08:49 [INFO   ] runner.py:133 [sim_t=00015.259864s] Step finished      step=10
+10:08:49 [INFO   ] runner.py:120 [sim_t=00015.259864s] Step starting      step=11
+10:08:49 [INFO   ] runner.py:138 [sim_t=00015.259864s] Phase starting     step=11 phase=0 name=fwd_bwd_compute
+10:08:49 [INFO   ] runner.py:149 [sim_t=00015.269864s] Phase finished     step=11 phase=0 name=fwd_bwd_compute
+10:08:49 [INFO   ] runner.py:138 [sim_t=00015.269864s] Phase starting     step=11 phase=1 name=gradient_sync
+10:09:10 [INFO   ] runner.py:149 [sim_t=00016.571703s] Phase finished     step=11 phase=1 name=gradient_sync
+10:09:10 [INFO   ] runner.py:138 [sim_t=00016.571703s] Phase starting     step=11 phase=2 name=optimizer_compute
+10:09:10 [INFO   ] runner.py:149 [sim_t=00016.576703s] Phase finished     step=11 phase=2 name=optimizer_compute
+10:09:10 [INFO   ] runner.py:133 [sim_t=00016.576703s] Step finished      step=11
+10:09:10 [INFO   ] runner.py:120 [sim_t=00016.576703s] Step starting      step=12
+10:09:10 [INFO   ] runner.py:138 [sim_t=00016.576703s] Phase starting     step=12 phase=0 name=fwd_bwd_compute
+10:09:10 [INFO   ] runner.py:149 [sim_t=00016.586703s] Phase finished     step=12 phase=0 name=fwd_bwd_compute
+10:09:10 [INFO   ] runner.py:138 [sim_t=00016.586703s] Phase starting     step=12 phase=1 name=gradient_sync
+10:09:31 [INFO   ] runner.py:149 [sim_t=00018.051071s] Phase finished     step=12 phase=1 name=gradient_sync
+10:09:31 [INFO   ] runner.py:138 [sim_t=00018.051071s] Phase starting     step=12 phase=2 name=optimizer_compute
+10:09:31 [INFO   ] runner.py:149 [sim_t=00018.056071s] Phase finished     step=12 phase=2 name=optimizer_compute
+10:09:31 [INFO   ] runner.py:133 [sim_t=00018.056071s] Step finished      step=12
+10:09:31 [INFO   ] runner.py:120 [sim_t=00018.056071s] Step starting      step=13
+10:09:31 [INFO   ] runner.py:138 [sim_t=00018.056071s] Phase starting     step=13 phase=0 name=fwd_bwd_compute
+10:09:31 [INFO   ] runner.py:149 [sim_t=00018.066071s] Phase finished     step=13 phase=0 name=fwd_bwd_compute
+10:09:31 [INFO   ] runner.py:138 [sim_t=00018.066071s] Phase starting     step=13 phase=1 name=gradient_sync
+10:09:51 [INFO   ] runner.py:149 [sim_t=00019.400416s] Phase finished     step=13 phase=1 name=gradient_sync
+10:09:51 [INFO   ] runner.py:138 [sim_t=00019.400416s] Phase starting     step=13 phase=2 name=optimizer_compute
+10:09:51 [INFO   ] runner.py:149 [sim_t=00019.405416s] Phase finished     step=13 phase=2 name=optimizer_compute
+10:09:51 [INFO   ] runner.py:133 [sim_t=00019.405416s] Step finished      step=13
+10:09:51 [INFO   ] runner.py:120 [sim_t=00019.405416s] Step starting      step=14
+10:09:51 [INFO   ] runner.py:138 [sim_t=00019.405416s] Phase starting     step=14 phase=0 name=fwd_bwd_compute
+10:09:51 [INFO   ] runner.py:149 [sim_t=00019.415416s] Phase finished     step=14 phase=0 name=fwd_bwd_compute
+10:09:51 [INFO   ] runner.py:138 [sim_t=00019.415416s] Phase starting     step=14 phase=1 name=gradient_sync
+10:10:12 [INFO   ] runner.py:149 [sim_t=00020.814773s] Phase finished     step=14 phase=1 name=gradient_sync
+10:10:12 [INFO   ] runner.py:138 [sim_t=00020.814773s] Phase starting     step=14 phase=2 name=optimizer_compute
+10:10:12 [INFO   ] runner.py:149 [sim_t=00020.819773s] Phase finished     step=14 phase=2 name=optimizer_compute
+10:10:12 [INFO   ] runner.py:133 [sim_t=00020.819773s] Step finished      step=14
+10:10:12 [INFO   ] runner.py:120 [sim_t=00020.819773s] Step starting      step=15
+10:10:12 [INFO   ] runner.py:138 [sim_t=00020.819773s] Phase starting     step=15 phase=0 name=fwd_bwd_compute
+10:10:12 [INFO   ] runner.py:149 [sim_t=00020.829773s] Phase finished     step=15 phase=0 name=fwd_bwd_compute
+10:10:12 [INFO   ] runner.py:138 [sim_t=00020.829773s] Phase starting     step=15 phase=1 name=gradient_sync
+10:10:32 [INFO   ] runner.py:149 [sim_t=00022.391659s] Phase finished     step=15 phase=1 name=gradient_sync
+10:10:32 [INFO   ] runner.py:138 [sim_t=00022.391659s] Phase starting     step=15 phase=2 name=optimizer_compute
+10:10:32 [INFO   ] runner.py:149 [sim_t=00022.396659s] Phase finished     step=15 phase=2 name=optimizer_compute
+10:10:32 [INFO   ] runner.py:133 [sim_t=00022.396659s] Step finished      step=15
+10:10:32 [INFO   ] runner.py:120 [sim_t=00022.396659s] Step starting      step=16
+10:10:32 [INFO   ] runner.py:138 [sim_t=00022.396659s] Phase starting     step=16 phase=0 name=fwd_bwd_compute
+10:10:32 [INFO   ] runner.py:149 [sim_t=00022.406659s] Phase finished     step=16 phase=0 name=fwd_bwd_compute
+10:10:32 [INFO   ] runner.py:138 [sim_t=00022.406659s] Phase starting     step=16 phase=1 name=gradient_sync
+10:10:53 [INFO   ] runner.py:149 [sim_t=00023.578474s] Phase finished     step=16 phase=1 name=gradient_sync
+10:10:53 [INFO   ] runner.py:138 [sim_t=00023.578474s] Phase starting     step=16 phase=2 name=optimizer_compute
+10:10:53 [INFO   ] runner.py:149 [sim_t=00023.583474s] Phase finished     step=16 phase=2 name=optimizer_compute
+10:10:53 [INFO   ] runner.py:133 [sim_t=00023.583474s] Step finished      step=16
+10:10:53 [INFO   ] runner.py:120 [sim_t=00023.583474s] Step starting      step=17
+10:10:53 [INFO   ] runner.py:138 [sim_t=00023.583474s] Phase starting     step=17 phase=0 name=fwd_bwd_compute
+10:10:53 [INFO   ] runner.py:149 [sim_t=00023.593474s] Phase finished     step=17 phase=0 name=fwd_bwd_compute
+10:10:53 [INFO   ] runner.py:138 [sim_t=00023.593474s] Phase starting     step=17 phase=1 name=gradient_sync
+10:11:14 [INFO   ] runner.py:149 [sim_t=00024.895314s] Phase finished     step=17 phase=1 name=gradient_sync
+10:11:14 [INFO   ] runner.py:138 [sim_t=00024.895314s] Phase starting     step=17 phase=2 name=optimizer_compute
+10:11:14 [INFO   ] runner.py:149 [sim_t=00024.900314s] Phase finished     step=17 phase=2 name=optimizer_compute
+10:11:14 [INFO   ] runner.py:133 [sim_t=00024.900314s] Step finished      step=17
+10:11:14 [INFO   ] runner.py:120 [sim_t=00024.900314s] Step starting      step=18
+10:11:14 [INFO   ] runner.py:138 [sim_t=00024.900314s] Phase starting     step=18 phase=0 name=fwd_bwd_compute
+10:11:14 [INFO   ] runner.py:149 [sim_t=00024.910314s] Phase finished     step=18 phase=0 name=fwd_bwd_compute
+10:11:14 [INFO   ] runner.py:138 [sim_t=00024.910314s] Phase starting     step=18 phase=1 name=gradient_sync
+10:11:35 [INFO   ] runner.py:149 [sim_t=00026.049623s] Phase finished     step=18 phase=1 name=gradient_sync
+10:11:35 [INFO   ] runner.py:138 [sim_t=00026.049623s] Phase starting     step=18 phase=2 name=optimizer_compute
+10:11:35 [INFO   ] runner.py:149 [sim_t=00026.054623s] Phase finished     step=18 phase=2 name=optimizer_compute
+10:11:35 [INFO   ] runner.py:133 [sim_t=00026.054623s] Step finished      step=18
+10:11:35 [INFO   ] runner.py:120 [sim_t=00026.054623s] Step starting      step=19
+10:11:35 [INFO   ] runner.py:138 [sim_t=00026.054623s] Phase starting     step=19 phase=0 name=fwd_bwd_compute
+10:11:35 [INFO   ] runner.py:149 [sim_t=00026.064623s] Phase finished     step=19 phase=0 name=fwd_bwd_compute
+10:11:35 [INFO   ] runner.py:138 [sim_t=00026.064623s] Phase starting     step=19 phase=1 name=gradient_sync
+10:11:56 [INFO   ] runner.py:149 [sim_t=00027.398968s] Phase finished     step=19 phase=1 name=gradient_sync
+10:11:56 [INFO   ] runner.py:138 [sim_t=00027.398968s] Phase starting     step=19 phase=2 name=optimizer_compute
+10:11:56 [INFO   ] runner.py:149 [sim_t=00027.403968s] Phase finished     step=19 phase=2 name=optimizer_compute
+10:11:56 [INFO   ] runner.py:133 [sim_t=00027.403968s] Step finished      step=19
+10:11:56 [INFO   ] runner.py:120 [sim_t=00027.403968s] Step starting      step=20
+10:11:56 [INFO   ] runner.py:138 [sim_t=00027.403968s] Phase starting     step=20 phase=0 name=fwd_bwd_compute
+10:11:56 [INFO   ] runner.py:149 [sim_t=00027.413968s] Phase finished     step=20 phase=0 name=fwd_bwd_compute
+10:11:56 [INFO   ] runner.py:138 [sim_t=00027.413968s] Phase starting     step=20 phase=1 name=gradient_sync
+10:12:16 [INFO   ] runner.py:149 [sim_t=00028.845831s] Phase finished     step=20 phase=1 name=gradient_sync
+10:12:16 [INFO   ] runner.py:138 [sim_t=00028.845831s] Phase starting     step=20 phase=2 name=optimizer_compute
+10:12:16 [INFO   ] runner.py:149 [sim_t=00028.850831s] Phase finished     step=20 phase=2 name=optimizer_compute
+10:12:16 [INFO   ] runner.py:133 [sim_t=00028.850831s] Step finished      step=20
+10:12:16 [INFO   ] runner.py:120 [sim_t=00028.850831s] Step starting      step=21
+10:12:16 [INFO   ] runner.py:138 [sim_t=00028.850831s] Phase starting     step=21 phase=0 name=fwd_bwd_compute
+10:12:16 [INFO   ] runner.py:149 [sim_t=00028.860831s] Phase finished     step=21 phase=0 name=fwd_bwd_compute
+10:12:16 [INFO   ] runner.py:138 [sim_t=00028.860831s] Phase starting     step=21 phase=1 name=gradient_sync
+10:12:37 [INFO   ] runner.py:149 [sim_t=00030.065152s] Phase finished     step=21 phase=1 name=gradient_sync
+10:12:37 [INFO   ] runner.py:138 [sim_t=00030.065152s] Phase starting     step=21 phase=2 name=optimizer_compute
+10:12:37 [INFO   ] runner.py:149 [sim_t=00030.070152s] Phase finished     step=21 phase=2 name=optimizer_compute
+10:12:37 [INFO   ] runner.py:133 [sim_t=00030.070152s] Step finished      step=21
+10:12:37 [INFO   ] runner.py:120 [sim_t=00030.070152s] Step starting      step=22
+10:12:37 [INFO   ] runner.py:138 [sim_t=00030.070152s] Phase starting     step=22 phase=0 name=fwd_bwd_compute
+10:12:37 [INFO   ] runner.py:149 [sim_t=00030.080152s] Phase finished     step=22 phase=0 name=fwd_bwd_compute
+10:12:37 [INFO   ] runner.py:138 [sim_t=00030.080152s] Phase starting     step=22 phase=1 name=gradient_sync
+10:12:58 [INFO   ] runner.py:149 [sim_t=00031.609532s] Phase finished     step=22 phase=1 name=gradient_sync
+10:12:58 [INFO   ] runner.py:138 [sim_t=00031.609532s] Phase starting     step=22 phase=2 name=optimizer_compute
+10:12:58 [INFO   ] runner.py:149 [sim_t=00031.614532s] Phase finished     step=22 phase=2 name=optimizer_compute
+10:12:58 [INFO   ] runner.py:133 [sim_t=00031.614532s] Step finished      step=22
+10:12:58 [INFO   ] runner.py:120 [sim_t=00031.614532s] Step starting      step=23
+10:12:58 [INFO   ] runner.py:138 [sim_t=00031.614532s] Phase starting     step=23 phase=0 name=fwd_bwd_compute
+10:12:58 [INFO   ] runner.py:149 [sim_t=00031.624532s] Phase finished     step=23 phase=0 name=fwd_bwd_compute
+10:12:58 [INFO   ] runner.py:138 [sim_t=00031.624532s] Phase starting     step=23 phase=1 name=gradient_sync
+10:13:19 [INFO   ] runner.py:149 [sim_t=00032.763842s] Phase finished     step=23 phase=1 name=gradient_sync
+10:13:19 [INFO   ] runner.py:138 [sim_t=00032.763842s] Phase starting     step=23 phase=2 name=optimizer_compute
+10:13:19 [INFO   ] runner.py:149 [sim_t=00032.768842s] Phase finished     step=23 phase=2 name=optimizer_compute
+10:13:19 [INFO   ] runner.py:133 [sim_t=00032.768842s] Step finished      step=23
+10:13:19 [INFO   ] runner.py:120 [sim_t=00032.768842s] Step starting      step=24
+10:13:19 [INFO   ] runner.py:138 [sim_t=00032.768842s] Phase starting     step=24 phase=0 name=fwd_bwd_compute
+10:13:19 [INFO   ] runner.py:149 [sim_t=00032.778842s] Phase finished     step=24 phase=0 name=fwd_bwd_compute
+10:13:19 [INFO   ] runner.py:138 [sim_t=00032.778842s] Phase starting     step=24 phase=1 name=gradient_sync
+10:13:39 [INFO   ] runner.py:149 [sim_t=00034.194386s] Phase finished     step=24 phase=1 name=gradient_sync
+10:13:39 [INFO   ] runner.py:138 [sim_t=00034.194386s] Phase starting     step=24 phase=2 name=optimizer_compute
+10:13:39 [INFO   ] runner.py:149 [sim_t=00034.199386s] Phase finished     step=24 phase=2 name=optimizer_compute
+10:13:39 [INFO   ] runner.py:133 [sim_t=00034.199386s] Step finished      step=24
+10:13:39 [INFO   ] runner.py:120 [sim_t=00034.199386s] Step starting      step=25
+10:13:39 [INFO   ] runner.py:138 [sim_t=00034.199386s] Phase starting     step=25 phase=0 name=fwd_bwd_compute
+10:13:39 [INFO   ] runner.py:149 [sim_t=00034.209386s] Phase finished     step=25 phase=0 name=fwd_bwd_compute
+10:13:39 [INFO   ] runner.py:138 [sim_t=00034.209386s] Phase starting     step=25 phase=1 name=gradient_sync
+10:14:00 [INFO   ] runner.py:149 [sim_t=00035.592490s] Phase finished     step=25 phase=1 name=gradient_sync
+10:14:00 [INFO   ] runner.py:138 [sim_t=00035.592490s] Phase starting     step=25 phase=2 name=optimizer_compute
+10:14:00 [INFO   ] runner.py:149 [sim_t=00035.597490s] Phase finished     step=25 phase=2 name=optimizer_compute
+10:14:00 [INFO   ] runner.py:133 [sim_t=00035.597490s] Step finished      step=25
+10:14:00 [INFO   ] runner.py:120 [sim_t=00035.597490s] Step starting      step=26
+10:14:00 [INFO   ] runner.py:138 [sim_t=00035.597490s] Phase starting     step=26 phase=0 name=fwd_bwd_compute
+10:14:00 [INFO   ] runner.py:149 [sim_t=00035.607490s] Phase finished     step=26 phase=0 name=fwd_bwd_compute
+10:14:00 [INFO   ] runner.py:138 [sim_t=00035.607490s] Phase starting     step=26 phase=1 name=gradient_sync
+10:14:21 [INFO   ] runner.py:149 [sim_t=00037.039353s] Phase finished     step=26 phase=1 name=gradient_sync
+10:14:21 [INFO   ] runner.py:138 [sim_t=00037.039353s] Phase starting     step=26 phase=2 name=optimizer_compute
+10:14:21 [INFO   ] runner.py:149 [sim_t=00037.044353s] Phase finished     step=26 phase=2 name=optimizer_compute
+10:14:21 [INFO   ] runner.py:133 [sim_t=00037.044353s] Step finished      step=26
+10:14:21 [INFO   ] runner.py:120 [sim_t=00037.044353s] Step starting      step=27
+10:14:21 [INFO   ] runner.py:138 [sim_t=00037.044353s] Phase starting     step=27 phase=0 name=fwd_bwd_compute
+10:14:21 [INFO   ] runner.py:149 [sim_t=00037.054353s] Phase finished     step=27 phase=0 name=fwd_bwd_compute
+10:14:21 [INFO   ] runner.py:138 [sim_t=00037.054353s] Phase starting     step=27 phase=1 name=gradient_sync
+10:14:42 [INFO   ] runner.py:149 [sim_t=00038.226168s] Phase finished     step=27 phase=1 name=gradient_sync
+10:14:42 [INFO   ] runner.py:138 [sim_t=00038.226168s] Phase starting     step=27 phase=2 name=optimizer_compute
+10:14:42 [INFO   ] runner.py:149 [sim_t=00038.231168s] Phase finished     step=27 phase=2 name=optimizer_compute
+10:14:42 [INFO   ] runner.py:133 [sim_t=00038.231168s] Step finished      step=27
+10:14:42 [INFO   ] runner.py:120 [sim_t=00038.231168s] Step starting      step=28
+10:14:42 [INFO   ] runner.py:138 [sim_t=00038.231168s] Phase starting     step=28 phase=0 name=fwd_bwd_compute
+10:14:42 [INFO   ] runner.py:149 [sim_t=00038.241168s] Phase finished     step=28 phase=0 name=fwd_bwd_compute
+10:14:42 [INFO   ] runner.py:138 [sim_t=00038.241168s] Phase starting     step=28 phase=1 name=gradient_sync
+10:15:03 [INFO   ] runner.py:149 [sim_t=00039.673031s] Phase finished     step=28 phase=1 name=gradient_sync
+10:15:03 [INFO   ] runner.py:138 [sim_t=00039.673031s] Phase starting     step=28 phase=2 name=optimizer_compute
+10:15:03 [INFO   ] runner.py:149 [sim_t=00039.678031s] Phase finished     step=28 phase=2 name=optimizer_compute
+10:15:03 [INFO   ] runner.py:133 [sim_t=00039.678031s] Step finished      step=28
+10:15:03 [INFO   ] runner.py:120 [sim_t=00039.678031s] Step starting      step=29
+10:15:03 [INFO   ] runner.py:138 [sim_t=00039.678031s] Phase starting     step=29 phase=0 name=fwd_bwd_compute
+10:15:03 [INFO   ] runner.py:149 [sim_t=00039.688031s] Phase finished     step=29 phase=0 name=fwd_bwd_compute
+10:15:03 [INFO   ] runner.py:138 [sim_t=00039.688031s] Phase starting     step=29 phase=1 name=gradient_sync
+10:15:23 [INFO   ] runner.py:149 [sim_t=00041.119893s] Phase finished     step=29 phase=1 name=gradient_sync
+10:15:23 [INFO   ] runner.py:138 [sim_t=00041.119893s] Phase starting     step=29 phase=2 name=optimizer_compute
+10:15:23 [INFO   ] runner.py:149 [sim_t=00041.124893s] Phase finished     step=29 phase=2 name=optimizer_compute
+10:15:23 [INFO   ] runner.py:133 [sim_t=00041.124893s] Step finished      step=29
+10:15:23 [INFO   ] runner.py:120 [sim_t=00041.124893s] Step starting      step=30
+10:15:23 [INFO   ] runner.py:138 [sim_t=00041.124893s] Phase starting     step=30 phase=0 name=fwd_bwd_compute
+10:15:23 [INFO   ] runner.py:149 [sim_t=00041.134893s] Phase finished     step=30 phase=0 name=fwd_bwd_compute
+10:15:23 [INFO   ] runner.py:138 [sim_t=00041.134893s] Phase starting     step=30 phase=1 name=gradient_sync
+10:15:44 [INFO   ] runner.py:149 [sim_t=00042.566756s] Phase finished     step=30 phase=1 name=gradient_sync
+10:15:44 [INFO   ] runner.py:138 [sim_t=00042.566756s] Phase starting     step=30 phase=2 name=optimizer_compute
+10:15:44 [INFO   ] runner.py:149 [sim_t=00042.571756s] Phase finished     step=30 phase=2 name=optimizer_compute
+10:15:44 [INFO   ] runner.py:133 [sim_t=00042.571756s] Step finished      step=30
+10:15:44 [INFO   ] runner.py:120 [sim_t=00042.571756s] Step starting      step=31
+10:15:44 [INFO   ] runner.py:138 [sim_t=00042.571756s] Phase starting     step=31 phase=0 name=fwd_bwd_compute
+10:15:44 [INFO   ] runner.py:149 [sim_t=00042.581756s] Phase finished     step=31 phase=0 name=fwd_bwd_compute
+10:15:44 [INFO   ] runner.py:138 [sim_t=00042.581756s] Phase starting     step=31 phase=1 name=gradient_sync
+10:16:05 [INFO   ] runner.py:149 [sim_t=00044.046124s] Phase finished     step=31 phase=1 name=gradient_sync
+10:16:05 [INFO   ] runner.py:138 [sim_t=00044.046124s] Phase starting     step=31 phase=2 name=optimizer_compute
+10:16:05 [INFO   ] runner.py:149 [sim_t=00044.051124s] Phase finished     step=31 phase=2 name=optimizer_compute
+10:16:05 [INFO   ] runner.py:133 [sim_t=00044.051124s] Step finished      step=31
+10:16:05 [INFO   ] runner.py:120 [sim_t=00044.051124s] Step starting      step=32
+10:16:05 [INFO   ] runner.py:138 [sim_t=00044.051124s] Phase starting     step=32 phase=0 name=fwd_bwd_compute
+10:16:05 [INFO   ] runner.py:149 [sim_t=00044.061124s] Phase finished     step=32 phase=0 name=fwd_bwd_compute
+10:16:05 [INFO   ] runner.py:138 [sim_t=00044.061124s] Phase starting     step=32 phase=1 name=gradient_sync
+10:16:25 [INFO   ] runner.py:149 [sim_t=00045.363029s] Phase finished     step=32 phase=1 name=gradient_sync
+10:16:25 [INFO   ] runner.py:138 [sim_t=00045.363029s] Phase starting     step=32 phase=2 name=optimizer_compute
+10:16:25 [INFO   ] runner.py:149 [sim_t=00045.368029s] Phase finished     step=32 phase=2 name=optimizer_compute
+10:16:25 [INFO   ] runner.py:133 [sim_t=00045.368029s] Step finished      step=32
+10:16:25 [INFO   ] runner.py:120 [sim_t=00045.368029s] Step starting      step=33
+10:16:25 [INFO   ] runner.py:138 [sim_t=00045.368029s] Phase starting     step=33 phase=0 name=fwd_bwd_compute
+10:16:25 [INFO   ] runner.py:149 [sim_t=00045.378029s] Phase finished     step=33 phase=0 name=fwd_bwd_compute
+10:16:25 [INFO   ] runner.py:138 [sim_t=00045.378029s] Phase starting     step=33 phase=1 name=gradient_sync
+10:16:46 [INFO   ] runner.py:149 [sim_t=00046.712374s] Phase finished     step=33 phase=1 name=gradient_sync
+10:16:46 [INFO   ] runner.py:138 [sim_t=00046.712374s] Phase starting     step=33 phase=2 name=optimizer_compute
+10:16:46 [INFO   ] runner.py:149 [sim_t=00046.717374s] Phase finished     step=33 phase=2 name=optimizer_compute
+10:16:46 [INFO   ] runner.py:133 [sim_t=00046.717374s] Step finished      step=33
+10:16:46 [INFO   ] runner.py:120 [sim_t=00046.717374s] Step starting      step=34
+10:16:46 [INFO   ] runner.py:138 [sim_t=00046.717374s] Phase starting     step=34 phase=0 name=fwd_bwd_compute
+10:16:46 [INFO   ] runner.py:149 [sim_t=00046.727374s] Phase finished     step=34 phase=0 name=fwd_bwd_compute
+10:16:46 [INFO   ] runner.py:138 [sim_t=00046.727374s] Phase starting     step=34 phase=1 name=gradient_sync
+10:17:07 [INFO   ] runner.py:149 [sim_t=00047.964201s] Phase finished     step=34 phase=1 name=gradient_sync
+10:17:07 [INFO   ] runner.py:138 [sim_t=00047.964201s] Phase starting     step=34 phase=2 name=optimizer_compute
+10:17:07 [INFO   ] runner.py:149 [sim_t=00047.969201s] Phase finished     step=34 phase=2 name=optimizer_compute
+10:17:07 [INFO   ] runner.py:133 [sim_t=00047.969201s] Step finished      step=34
+10:17:07 [INFO   ] runner.py:120 [sim_t=00047.969201s] Step starting      step=35
+10:17:07 [INFO   ] runner.py:138 [sim_t=00047.969201s] Phase starting     step=35 phase=0 name=fwd_bwd_compute
+10:17:07 [INFO   ] runner.py:149 [sim_t=00047.979201s] Phase finished     step=35 phase=0 name=fwd_bwd_compute
+10:17:07 [INFO   ] runner.py:138 [sim_t=00047.979201s] Phase starting     step=35 phase=1 name=gradient_sync
+10:17:27 [INFO   ] runner.py:149 [sim_t=00049.346052s] Phase finished     step=35 phase=1 name=gradient_sync
+10:17:27 [INFO   ] runner.py:138 [sim_t=00049.346052s] Phase starting     step=35 phase=2 name=optimizer_compute
+10:17:27 [INFO   ] runner.py:149 [sim_t=00049.351052s] Phase finished     step=35 phase=2 name=optimizer_compute
+10:17:27 [INFO   ] runner.py:133 [sim_t=00049.351052s] Step finished      step=35
+10:17:27 [INFO   ] runner.py:120 [sim_t=00049.351052s] Step starting      step=36
+10:17:27 [INFO   ] runner.py:138 [sim_t=00049.351052s] Phase starting     step=36 phase=0 name=fwd_bwd_compute
+10:17:27 [INFO   ] runner.py:149 [sim_t=00049.361052s] Phase finished     step=36 phase=0 name=fwd_bwd_compute
+10:17:27 [INFO   ] runner.py:138 [sim_t=00049.361052s] Phase starting     step=36 phase=1 name=gradient_sync
+10:17:48 [INFO   ] runner.py:149 [sim_t=00050.727903s] Phase finished     step=36 phase=1 name=gradient_sync
+10:17:48 [INFO   ] runner.py:138 [sim_t=00050.727903s] Phase starting     step=36 phase=2 name=optimizer_compute
+10:17:48 [INFO   ] runner.py:149 [sim_t=00050.732903s] Phase finished     step=36 phase=2 name=optimizer_compute
+10:17:48 [INFO   ] runner.py:133 [sim_t=00050.732903s] Step finished      step=36
+10:17:48 [INFO   ] runner.py:120 [sim_t=00050.732903s] Step starting      step=37
+10:17:48 [INFO   ] runner.py:138 [sim_t=00050.732903s] Phase starting     step=37 phase=0 name=fwd_bwd_compute
+10:17:48 [INFO   ] runner.py:149 [sim_t=00050.742903s] Phase finished     step=37 phase=0 name=fwd_bwd_compute
+10:17:48 [INFO   ] runner.py:138 [sim_t=00050.742903s] Phase starting     step=37 phase=1 name=gradient_sync
+10:18:09 [INFO   ] runner.py:149 [sim_t=00052.207206s] Phase finished     step=37 phase=1 name=gradient_sync
+10:18:09 [INFO   ] runner.py:138 [sim_t=00052.207206s] Phase starting     step=37 phase=2 name=optimizer_compute
+10:18:09 [INFO   ] runner.py:149 [sim_t=00052.212206s] Phase finished     step=37 phase=2 name=optimizer_compute
+10:18:09 [INFO   ] runner.py:133 [sim_t=00052.212206s] Step finished      step=37
+10:18:09 [INFO   ] runner.py:120 [sim_t=00052.212206s] Step starting      step=38
+10:18:09 [INFO   ] runner.py:138 [sim_t=00052.212206s] Phase starting     step=38 phase=0 name=fwd_bwd_compute
+10:18:09 [INFO   ] runner.py:149 [sim_t=00052.222206s] Phase finished     step=38 phase=0 name=fwd_bwd_compute
+10:18:09 [INFO   ] runner.py:138 [sim_t=00052.222206s] Phase starting     step=38 phase=1 name=gradient_sync
+10:18:30 [INFO   ] runner.py:149 [sim_t=00053.654068s] Phase finished     step=38 phase=1 name=gradient_sync
+10:18:30 [INFO   ] runner.py:138 [sim_t=00053.654068s] Phase starting     step=38 phase=2 name=optimizer_compute
+10:18:30 [INFO   ] runner.py:149 [sim_t=00053.659068s] Phase finished     step=38 phase=2 name=optimizer_compute
+10:18:30 [INFO   ] runner.py:133 [sim_t=00053.659068s] Step finished      step=38
+10:18:30 [INFO   ] runner.py:120 [sim_t=00053.659068s] Step starting      step=39
+10:18:30 [INFO   ] runner.py:138 [sim_t=00053.659068s] Phase starting     step=39 phase=0 name=fwd_bwd_compute
+10:18:30 [INFO   ] runner.py:149 [sim_t=00053.669068s] Phase finished     step=39 phase=0 name=fwd_bwd_compute
+10:18:30 [INFO   ] runner.py:138 [sim_t=00053.669068s] Phase starting     step=39 phase=1 name=gradient_sync
+10:18:51 [INFO   ] runner.py:149 [sim_t=00055.035919s] Phase finished     step=39 phase=1 name=gradient_sync
+10:18:51 [INFO   ] runner.py:138 [sim_t=00055.035919s] Phase starting     step=39 phase=2 name=optimizer_compute
+10:18:51 [INFO   ] runner.py:149 [sim_t=00055.040919s] Phase finished     step=39 phase=2 name=optimizer_compute
+10:18:51 [INFO   ] runner.py:133 [sim_t=00055.040919s] Step finished      step=39
+10:18:51 [INFO   ] runner.py:120 [sim_t=00055.040919s] Step starting      step=40
+10:18:51 [INFO   ] runner.py:138 [sim_t=00055.040919s] Phase starting     step=40 phase=0 name=fwd_bwd_compute
+10:18:51 [INFO   ] runner.py:149 [sim_t=00055.050919s] Phase finished     step=40 phase=0 name=fwd_bwd_compute
+10:18:51 [INFO   ] runner.py:138 [sim_t=00055.050919s] Phase starting     step=40 phase=1 name=gradient_sync
+10:19:12 [INFO   ] runner.py:149 [sim_t=00056.482782s] Phase finished     step=40 phase=1 name=gradient_sync
+10:19:12 [INFO   ] runner.py:138 [sim_t=00056.482782s] Phase starting     step=40 phase=2 name=optimizer_compute
+10:19:12 [INFO   ] runner.py:149 [sim_t=00056.487782s] Phase finished     step=40 phase=2 name=optimizer_compute
+10:19:12 [INFO   ] runner.py:133 [sim_t=00056.487782s] Step finished      step=40
+10:19:12 [INFO   ] runner.py:120 [sim_t=00056.487782s] Step starting      step=41
+10:19:12 [INFO   ] runner.py:138 [sim_t=00056.487782s] Phase starting     step=41 phase=0 name=fwd_bwd_compute
+10:19:12 [INFO   ] runner.py:149 [sim_t=00056.497782s] Phase finished     step=41 phase=0 name=fwd_bwd_compute
+10:19:12 [INFO   ] runner.py:138 [sim_t=00056.497782s] Phase starting     step=41 phase=1 name=gradient_sync
+10:19:34 [INFO   ] runner.py:149 [sim_t=00058.059668s] Phase finished     step=41 phase=1 name=gradient_sync
+10:19:34 [INFO   ] runner.py:138 [sim_t=00058.059668s] Phase starting     step=41 phase=2 name=optimizer_compute
+10:19:34 [INFO   ] runner.py:149 [sim_t=00058.064668s] Phase finished     step=41 phase=2 name=optimizer_compute
+10:19:34 [INFO   ] runner.py:133 [sim_t=00058.064668s] Step finished      step=41
+10:19:34 [INFO   ] runner.py:120 [sim_t=00058.064668s] Step starting      step=42
+10:19:34 [INFO   ] runner.py:138 [sim_t=00058.064668s] Phase starting     step=42 phase=0 name=fwd_bwd_compute
+10:19:34 [INFO   ] runner.py:149 [sim_t=00058.074668s] Phase finished     step=42 phase=0 name=fwd_bwd_compute
+10:19:34 [INFO   ] runner.py:138 [sim_t=00058.074668s] Phase starting     step=42 phase=1 name=gradient_sync
+10:19:55 [INFO   ] runner.py:149 [sim_t=00059.441518s] Phase finished     step=42 phase=1 name=gradient_sync
+10:19:55 [INFO   ] runner.py:138 [sim_t=00059.441518s] Phase starting     step=42 phase=2 name=optimizer_compute
+10:19:55 [INFO   ] runner.py:149 [sim_t=00059.446518s] Phase finished     step=42 phase=2 name=optimizer_compute
+10:19:55 [INFO   ] runner.py:133 [sim_t=00059.446518s] Step finished      step=42
+10:19:55 [INFO   ] runner.py:120 [sim_t=00059.446518s] Step starting      step=43
+10:19:55 [INFO   ] runner.py:138 [sim_t=00059.446518s] Phase starting     step=43 phase=0 name=fwd_bwd_compute
+10:19:55 [INFO   ] runner.py:149 [sim_t=00059.456518s] Phase finished     step=43 phase=0 name=fwd_bwd_compute
+10:19:55 [INFO   ] runner.py:138 [sim_t=00059.456518s] Phase starting     step=43 phase=1 name=gradient_sync
+10:20:15 [INFO   ] runner.py:149 [sim_t=00060.790863s] Phase finished     step=43 phase=1 name=gradient_sync
+10:20:15 [INFO   ] runner.py:138 [sim_t=00060.790863s] Phase starting     step=43 phase=2 name=optimizer_compute
+10:20:15 [INFO   ] runner.py:149 [sim_t=00060.795863s] Phase finished     step=43 phase=2 name=optimizer_compute
+10:20:15 [INFO   ] runner.py:133 [sim_t=00060.795863s] Step finished      step=43
+10:20:15 [INFO   ] runner.py:120 [sim_t=00060.795863s] Step starting      step=44
+10:20:15 [INFO   ] runner.py:138 [sim_t=00060.795863s] Phase starting     step=44 phase=0 name=fwd_bwd_compute
+10:20:15 [INFO   ] runner.py:149 [sim_t=00060.805863s] Phase finished     step=44 phase=0 name=fwd_bwd_compute
+10:20:15 [INFO   ] runner.py:138 [sim_t=00060.805863s] Phase starting     step=44 phase=1 name=gradient_sync
+10:20:36 [INFO   ] runner.py:149 [sim_t=00061.977679s] Phase finished     step=44 phase=1 name=gradient_sync
+10:20:36 [INFO   ] runner.py:138 [sim_t=00061.977679s] Phase starting     step=44 phase=2 name=optimizer_compute
+10:20:36 [INFO   ] runner.py:149 [sim_t=00061.982679s] Phase finished     step=44 phase=2 name=optimizer_compute
+10:20:36 [INFO   ] runner.py:133 [sim_t=00061.982679s] Step finished      step=44
+10:20:36 [INFO   ] runner.py:120 [sim_t=00061.982679s] Step starting      step=45
+10:20:36 [INFO   ] runner.py:138 [sim_t=00061.982679s] Phase starting     step=45 phase=0 name=fwd_bwd_compute
+10:20:36 [INFO   ] runner.py:149 [sim_t=00061.992679s] Phase finished     step=45 phase=0 name=fwd_bwd_compute
+10:20:36 [INFO   ] runner.py:138 [sim_t=00061.992679s] Phase starting     step=45 phase=1 name=gradient_sync
+10:20:57 [INFO   ] runner.py:149 [sim_t=00063.359530s] Phase finished     step=45 phase=1 name=gradient_sync
+10:20:57 [INFO   ] runner.py:138 [sim_t=00063.359530s] Phase starting     step=45 phase=2 name=optimizer_compute
+10:20:57 [INFO   ] runner.py:149 [sim_t=00063.364530s] Phase finished     step=45 phase=2 name=optimizer_compute
+10:20:57 [INFO   ] runner.py:133 [sim_t=00063.364530s] Step finished      step=45
+10:20:57 [INFO   ] runner.py:120 [sim_t=00063.364530s] Step starting      step=46
+10:20:57 [INFO   ] runner.py:138 [sim_t=00063.364530s] Phase starting     step=46 phase=0 name=fwd_bwd_compute
+10:20:57 [INFO   ] runner.py:149 [sim_t=00063.374530s] Phase finished     step=46 phase=0 name=fwd_bwd_compute
+10:20:57 [INFO   ] runner.py:138 [sim_t=00063.374530s] Phase starting     step=46 phase=1 name=gradient_sync
+10:21:18 [INFO   ] runner.py:149 [sim_t=00064.708875s] Phase finished     step=46 phase=1 name=gradient_sync
+10:21:18 [INFO   ] runner.py:138 [sim_t=00064.708875s] Phase starting     step=46 phase=2 name=optimizer_compute
+10:21:18 [INFO   ] runner.py:149 [sim_t=00064.713875s] Phase finished     step=46 phase=2 name=optimizer_compute
+10:21:18 [INFO   ] runner.py:133 [sim_t=00064.713875s] Step finished      step=46
+10:21:18 [INFO   ] runner.py:120 [sim_t=00064.713875s] Step starting      step=47
+10:21:18 [INFO   ] runner.py:138 [sim_t=00064.713875s] Phase starting     step=47 phase=0 name=fwd_bwd_compute
+10:21:18 [INFO   ] runner.py:149 [sim_t=00064.723875s] Phase finished     step=47 phase=0 name=fwd_bwd_compute
+10:21:18 [INFO   ] runner.py:138 [sim_t=00064.723875s] Phase starting     step=47 phase=1 name=gradient_sync
+10:21:39 [INFO   ] runner.py:149 [sim_t=00066.285761s] Phase finished     step=47 phase=1 name=gradient_sync
+10:21:39 [INFO   ] runner.py:138 [sim_t=00066.285761s] Phase starting     step=47 phase=2 name=optimizer_compute
+10:21:39 [INFO   ] runner.py:149 [sim_t=00066.290761s] Phase finished     step=47 phase=2 name=optimizer_compute
+10:21:39 [INFO   ] runner.py:133 [sim_t=00066.290761s] Step finished      step=47
+10:21:39 [INFO   ] runner.py:120 [sim_t=00066.290761s] Step starting      step=48
+10:21:39 [INFO   ] runner.py:138 [sim_t=00066.290761s] Phase starting     step=48 phase=0 name=fwd_bwd_compute
+10:21:39 [INFO   ] runner.py:149 [sim_t=00066.300761s] Phase finished     step=48 phase=0 name=fwd_bwd_compute
+10:21:39 [INFO   ] runner.py:138 [sim_t=00066.300761s] Phase starting     step=48 phase=1 name=gradient_sync
+10:22:00 [INFO   ] runner.py:149 [sim_t=00067.602600s] Phase finished     step=48 phase=1 name=gradient_sync
+10:22:00 [INFO   ] runner.py:138 [sim_t=00067.602600s] Phase starting     step=48 phase=2 name=optimizer_compute
+10:22:00 [INFO   ] runner.py:149 [sim_t=00067.607600s] Phase finished     step=48 phase=2 name=optimizer_compute
+10:22:00 [INFO   ] runner.py:133 [sim_t=00067.607600s] Step finished      step=48
+10:22:00 [INFO   ] runner.py:120 [sim_t=00067.607600s] Step starting      step=49
+10:22:00 [INFO   ] runner.py:138 [sim_t=00067.607600s] Phase starting     step=49 phase=0 name=fwd_bwd_compute
+10:22:00 [INFO   ] runner.py:149 [sim_t=00067.617600s] Phase finished     step=49 phase=0 name=fwd_bwd_compute
+10:22:00 [INFO   ] runner.py:138 [sim_t=00067.617600s] Phase starting     step=49 phase=1 name=gradient_sync
+10:22:20 [INFO   ] runner.py:149 [sim_t=00069.016957s] Phase finished     step=49 phase=1 name=gradient_sync
+10:22:20 [INFO   ] runner.py:138 [sim_t=00069.016957s] Phase starting     step=49 phase=2 name=optimizer_compute
+10:22:20 [INFO   ] runner.py:149 [sim_t=00069.021957s] Phase finished     step=49 phase=2 name=optimizer_compute
+10:22:20 [INFO   ] runner.py:133 [sim_t=00069.021957s] Step finished      step=49
+10:22:20 [INFO   ] runner.py:112 [sim_t=00069.021957s] Job finished       job_id=1531469390 step_time_avg=1380.439ms step_time_p95=1562.258ms step_time_p99=1576.886ms
+10:22:20 [INFO   ] ai_factory_network_simulation.py:266 Simulation run time: 1041.609 seconds
+10:22:20 [INFO   ] ai_factory_network_simulation.py:279 Results summary - Topology:
+hosts count: 32
+switches count: 12
+links count: 512
+failed_links: 0
+affected switches: 0
+10:22:20 [INFO   ] ai_factory_network_simulation.py:280 Results summary - Parameters:
+link_failure_percent: 0.0
+routing_mode: ecmp
+ecmp_flowlet_n_packets: 0
+max_path: 64
+scenario: AIFactorySUDpHeavyScenario
+steps: 50
+seed: 1972
+num_buckets: 8
+bucket_bytes_per_participant: 33554432
+gap_us: 0.0
+t_fwd_bwd_ms: 10.0
+optimizer_ms: 5.0
+mice_enabled: True
+mice_interarrival_s: 0.001
+mice_end_time_s: 10.0
+mice_packets_range: 1-4
+mice_force_cross_rack: True
+10:22:20 [INFO   ] ai_factory_network_simulation.py:281 Results summary - Run statistics:
+total packets count: 25420323
+total run time (simulator time in seconds): 69.02195652820703
+delivered packets count: 25420323
+delivered packets percentage: 100.0
+dropped packets count: 0
+dropped packets percentage: 0.0
+avg route length: 3.800743995267094
+max route length: 4
+min route length: 2
+links min delivery time: 9.053601792000167
+links max delivery time: 15.293284351929286
+links average delivery time (2 directions): 12.36686591996253
+link average utilization percentage: 8.95864630767607
+link_min_bytes_transmitted: 4526800896
+link_max_bytes_transmitted: 7646642176
+hosts received counts: [794370, 794477, 794412, 794374, 794416, 794366, 794369, 794507, 794411, 794347, 794298, 794360, 794491, 794331, 794433, 794362, 794430, 794348, 794381, 794333, 794461, 794409, 794327, 794401, 794252, 794345, 794358, 794415, 794363, 794384, 794358, 794434]
+global_max_port_peak_queue_len (packets): 2976
+avg_node_peak_egress_queue_len (packets): 2029.25
+ai_factory_step_time_ms_per_job: {'job': {'step_time_avg_ms': 1380.4391305641407, 'step_time_p95_ms': 1562.2583167311973, 'step_time_p99_ms': 1576.8859520245694}}
+mice_flows: 10001
+mice_fct_avg_ms: 5.107845165080691
+mice_fct_p95_ms: 42.71030399931996
+mice_fct_p99_ms: 79.91305600007192
+
+--- STDERR ---
+

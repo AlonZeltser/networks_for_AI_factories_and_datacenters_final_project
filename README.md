@@ -3,6 +3,8 @@
 ## Project Overview
 
 This project is a **discrete-event network simulator** designed to evaluate routing strategies for AI training workloads in data center fabrics. It focuses on comparing different load-balancing approaches (ECMP, Flowlet, Adaptive) under various traffic patterns and failure scenarios.
+Project experiments summary is described in submitted project paper.
+This document focus on  instructions for running simulations, analyzing results, and possibly extending the simulator for future research.
 
 ### Key Features
 
@@ -17,7 +19,7 @@ This project is a **discrete-event network simulator** designed to evaluate rout
 
 ### Research Outputs
 
-Detailed analysis and results are available in **`project.pdf`** (to be added to the repository).
+Detailed analysis and results are available in **`project.pdf`**.
 
 ---
 
@@ -25,6 +27,7 @@ Detailed analysis and results are available in **`project.pdf`** (to be added to
 
 ```
 network_sim/
+├── project.pdf                        # Main paper that describes the research and results
 ├── ai_factory_network_simulation.py   # Main entry point for AI factory scenarios (YAML-driven)
 ├── testing_scenarios.py                # Entry point for simple test scenarios (CLI-driven)
 ├── requirements.txt                    # Python dependencies
@@ -84,7 +87,7 @@ network_sim/
 
 ### Prerequisites
 
-- **Python 3.8+** (tested with Python 3.13)
+- **Python 3.13+**
 - **System dependencies**: Graphviz (for topology visualization)
   - Windows: Download from https://graphviz.org/download/
   - Linux: `sudo apt-get install graphviz`
@@ -94,7 +97,7 @@ network_sim/
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/AlonZeltser/networks_for_AI_factories_and_datacenters_final_project.git
    cd network_sim
    ```
 
@@ -107,6 +110,21 @@ network_sim/
    ```bash
    python -m pytest unit_tests/ -v
    ```
+
+
+#### IDE Setup (Optional)
+
+**PyCharm:**
+1. Open project: `File` → `Open` → Select `network_sim` directory
+2. Configure interpreter: `File` → `Settings` → `Project: network_sim` → `Python Interpreter`
+3. Click gear icon → `Add Interpreter` → Choose system Python or create virtualenv
+4. Install requirements: PyCharm will prompt, or run `pip install -r requirements.txt` in terminal
+
+**VS Code:**
+1. Open project folder
+2. Press `Ctrl+Shift+P` → `Python: Select Interpreter`
+3. Choose your Python installation
+4. Open terminal in VS Code and run `pip install -r requirements.txt`
 
 ---
 
@@ -121,11 +139,11 @@ python testing_scenarios.py <topology> <scenario> [options]
 ```
 
 **Available Topologies:**
-- `hsh` - HSH (Hypercube-like) topology
-- `simple-star` - Star topology
+- `hsh` - HSH basic Host-Switch-Host topology
+- `simple-star` - Simple Star topology for testing routing logic
 
 **Available Scenarios:**
-- `none` - Empty scenario (topology creation only)
+- `none` - Empty scenario (topology creation only, no traffic events)
 - `hsh-pingpong` - Ping-pong traffic pattern
 - `simple-star-all-to-all` - All-to-all traffic
 
@@ -150,6 +168,7 @@ python testing_scenarios.py simple-star simple-star-all-to-all --link-failure 5.
 ### 2. AI Factory Scenarios (Main Experiments)
 
 Use `ai_factory_network_simulation.py` with YAML configuration files for comprehensive AI workload simulations.
+YAML files are located in `ai_factory_simulation/scenarios/scenarios_configuration/` and define all parameters for topology, routing, workload, and run settings.
 
 #### Command Syntax
 
@@ -190,7 +209,7 @@ Located in `ai_factory_simulation/scenarios/scenarios_configuration/`:
 
 **Mixed Workload Scenarios:**
 - `ai_factory_su_mixed_scenario_ecmp_low.yaml` - Low load (X1)
-- `ai_factory_su_mixed_scenario_ecmp_mid.yaml` - Medium load (X3)
+- `ai_factory_su_mixed_scenario_ecmp_mid.yaml` - Medium load (X2)
 - `ai_factory_su_mixed_scenario_ecmp_high.yaml` - High load (X4)
 - `ai_factory_su_mixed_scenario_ecmp_high_failures.yaml` - High load + 5% link failures
 - Similar variants for `flowlet` and `adaptive` routing
@@ -220,7 +239,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\run_all_not_light.ps1 -Sto
 **Note:** Edit the `$Scenarios` array in `run_all_not_light.ps1` to select which configurations to run.
 
 **Output:**
-- Per-scenario logs in `batch_logs/`
+- Per-scenario logs in `batch_logs/` (directory created automatically if missing)
 - Summary file generated at completion
 
 ---
@@ -525,21 +544,40 @@ run:
 
 If you use this simulator in your research, please cite the accompanying paper:
 
+```bibtex
+@techreport{zeltser2026network,
+  title={Network Simulator for AI Factory Workloads: Evaluating Routing Strategies in Data Center Fabrics},
+  author={Zeltser},
+  institution={Ben-Gurion University of the Negev},
+  year={2026},
+  month={February},
+  note={Available in project.pdf}
+}
 ```
-[Citation information to be added - see project.pdf]
-```
+
+For more details, see **`project.pdf`**.
 
 ---
 
 ## License
 
-[License information to be added]
+This project is available for academic and educational purposes. 
+
+**Academic Use:** Free to use for research and educational purposes with proper citation.
+
+**Commercial Use:** Please contact the authors for licensing terms.
+
+Copyright © 2026 Alon Zeltser. All rights reserved.
 
 ---
 
 ## Contact
 
-[Contact information to be added]
+For questions, bug reports, or collaboration inquiries, please contact:
+
+- **Alon Zeltser**: [alonzeltser1@gmail.com](mailto:alonzeltser1@gmail.com)
+
+**Institution:** Ben-Gurion University of the Negev, Department of Computer Science
 
 ---
 
@@ -549,4 +587,4 @@ This simulator was developed for studying load-balancing strategies in AI traini
 
 ---
 
-**Last Updated**: January 2026
+**Last Updated**: February 2026

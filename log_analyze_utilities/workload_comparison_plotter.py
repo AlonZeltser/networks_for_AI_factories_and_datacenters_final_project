@@ -5,7 +5,7 @@ This script creates comparison graphs from batch logs showing performance
 across different traffic scales and routing methods.
 
 For heavy workload: X-axis is X1, X2, X8, X8-failure (low-mid-high-high_failures)
-For mixed workload: X-axis is X1, X3, X4, X4-failure (low-mid-high-high_failures)
+For mixed workload: X-axis is X1, X2, X4, X4-failure (low-mid-high-high_failures)
 
 Y-axis: Mean step time and P95 step time
 Lines: 3 solid lines (ECMP, Flowlet, Adaptive) for mean, 3 dashed lines for P95
@@ -268,7 +268,7 @@ def create_workload_graph(data: List[StepTimeData], workload_type: str, output_f
         scale_order = ['low', 'mid', 'high', 'high_failures']
         title = 'Heavy Workload: Step Time Comparison'
     else:  # mixed
-        x_labels = ['X1', 'X3', 'X4', 'X4-failure']
+        x_labels = ['X1', 'X2', 'X4', 'X4-failure']
         scale_order = ['low', 'mid', 'high', 'high_failures']
         title = 'Mixed Workload: Step Time Comparison'
 
@@ -373,7 +373,7 @@ def create_job_time_graph(data: List[StepTimeData], workload_type: str, output_f
         scale_order = ['low', 'mid', 'high', 'high_failures']
         title = 'Heavy Workload: Total Job Time Comparison'
     else:  # mixed
-        x_labels = ['X1', 'X3', 'X4', 'X4-failure']
+        x_labels = ['X1', 'X2', 'X4', 'X4-failure']
         scale_order = ['low', 'mid', 'high', 'high_failures']
         title = 'Mixed Workload: Total Job Time Comparison'
 
@@ -464,7 +464,7 @@ def create_step_cdf_graph(data: List[StepTimeData], workload_type: str, output_f
         title_prefix = 'Heavy Workload'
     else:  # mixed
         scale_order = ['low', 'mid', 'high', 'high_failures']
-        scale_labels = ['X1', 'X3', 'X4', 'X4-failure']
+        scale_labels = ['X1', 'X2', 'X4', 'X4-failure']
         title_prefix = 'Mixed Workload'
 
     # Create one subplot for each scale
